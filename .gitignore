@@ -1,0 +1,9 @@
+# Custom directories
+.idea/
+.vscode
+.DS_Store
+build*/
+install
+install-debug/
+install-release/
+install/
