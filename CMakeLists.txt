@@ -12,7 +12,7 @@ find_package(OpenCV 4 REQUIRED)
 # COLMAP
 find_package(COLMAP REQUIRED)
 
-# HuaRay SDK
+# Huaray SDK
 
 set(HUARAY_SDK_PATH /opt/HuarayTech/MVviewer/)
 set(HUARAY_INCLUDE_DIRS ${HUARAY_SDK_PATH}/include)
@@ -31,8 +31,8 @@ set(COMMON_LINK_LIBRARIES
     ${HUARAY_LIBRARIES}
 )
 
-# Global link directory (required by COLMAP)
-link_directories(
+# Global link directory (required by COLMAP and Huaray SDK).
+set(COMMON_LINK_DIRECTORIES
     ${COLMAP_LINK_DIRS}
     ${HUARAY_LINK_DIRS}
 )

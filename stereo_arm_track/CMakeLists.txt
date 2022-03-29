@@ -1,3 +1,18 @@
+# Stereo arm track library source files.
+set(SRCS
+frame_grabber.h frame_grabber.cc
+controller.h controller.cc
+)
+
+# Stereo arm track library.
+add_library(stereo_arm_track ${SRCS})
+target_include_directories(stereo_arm_track PUBLIC ${COMMON_INCLUDE_DIRS})
+target_link_directories(stereo_arm_track PUBLIC ${COMMON_LINK_DIRECTORIES})
+target_link_libraries(stereo_arm_track PUBLIC ${COMMON_LINK_LIBRARIES})
+
+add_executable(main main.cc)
+target_link_libraries(main PRIVATE stereo_arm_track)
+
 add_executable(test_bed test_bed.cc)
-target_include_directories(test_bed PRIVATE ${COMMON_INCLUDE_DIRS})
-target_link_libraries(test_bed PRIVATE ${COMMON_LINK_LIBRARIES})
+target_link_libraries(test_bed PRIVATE stereo_arm_track)
+
