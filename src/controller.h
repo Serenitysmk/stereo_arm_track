@@ -1,5 +1,5 @@
-#ifndef STEREO_ARM_TRACK_CONTROLLER_H_
-#define STEREO_ARM_TRACK_CONTROLLER_H_
+#ifndef SRC_CONTROLLER_H_
+#define SRC_CONTROLLER_H_
 
 struct ControllerOptions {
   

@@ -13,13 +13,20 @@ find_package(OpenCV 4 REQUIRED)
 find_package(COLMAP REQUIRED)
 
 # Huaray SDK
-
 set(HUARAY_SDK_PATH /opt/HuarayTech/MVviewer/)
 set(HUARAY_INCLUDE_DIRS ${HUARAY_SDK_PATH}/include)
 set(HUARAY_LINK_DIRS ${HUARAY_SDK_PATH}/lib)
 set(HUARAY_LIBRARIES -lMVSDK)
 
+if(CMAKE_BUILD_TYPE)
+    message(STATUS "Build type specified as ${CMAKE_BUILD_TYPE}")
+else()
+    message(STATUS "Build type not specified, using Release")
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
 set(COMMON_INCLUDE_DIRS
+    ${PROJECT_SOURCE_DIR}
     ${OpenCV_INCLUDE_DIRS}
     ${COLMAP_INCLUDE_DIRS}
     ${HUARAY_INCLUDE_DIRS}
@@ -37,4 +44,5 @@ set(COMMON_LINK_DIRECTORIES
     ${HUARAY_LINK_DIRS}
 )
 
-add_subdirectory(stereo_arm_track)
+add_subdirectory(src)
+add_subdirectory(exe)

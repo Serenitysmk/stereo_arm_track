@@ -10,9 +10,3 @@ target_include_directories(stereo_arm_track PUBLIC ${COMMON_INCLUDE_DIRS})
 target_link_directories(stereo_arm_track PUBLIC ${COMMON_LINK_DIRECTORIES})
 target_link_libraries(stereo_arm_track PUBLIC ${COMMON_LINK_LIBRARIES})
 
-add_executable(main main.cc)
-target_link_libraries(main PRIVATE stereo_arm_track)
-
-add_executable(test_bed test_bed.cc)
-target_link_libraries(test_bed PRIVATE stereo_arm_track)
-

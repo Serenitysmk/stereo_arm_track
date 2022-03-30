@@ -3,7 +3,7 @@
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
-#include "frame_grabber.h"
+#include "src/frame_grabber.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // Define variables

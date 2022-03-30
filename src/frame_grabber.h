@@ -1,11 +1,12 @@
-#ifndef STEREO_ARM_TRACK_FRAME_GRABBER_H_
-#define STEREO_ARM_TRACK_FRAME_GRABBER_H_
+#ifndef SRC_FRAME_GRABBER_H_
+#define SRC_FRAME_GRABBER_H_
 
 #include <IMVApi.h>
 
 struct FrameGrabberOptions {
   // Number of cameras.
-  int num_cameras = 2;
+  int num_cameras = 1;
+
   // Frame rate.
   double frame_rate = 25.0;
 
