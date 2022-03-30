@@ -18,7 +18,7 @@ bool FrameGrabber::Init() {
   // or the number of devices is different from the setting.
   int ret = IMV_OK;
   IMV_DeviceList device_info_list;
-  ret = IMV_EnumDevices(&device_info_list, interfaceTypeAll);
+  ret = IMV_EnumDevices(&device_info_list, interfaceTypeUsb3);
   if (ret != IMV_OK) {
     std::cerr << "ERROR: failed to find camera devices! Error code " << ret
               << std::endl;
