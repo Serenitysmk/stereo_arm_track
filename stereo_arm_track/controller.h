@@ -2,8 +2,7 @@
 #define STEREO_ARM_TRACK_CONTROLLER_H_
 
 struct ControllerOptions {
-  // Frame rate of the video stream.
-  int frame_rate;
+  
   bool Check() const;
 };
 
