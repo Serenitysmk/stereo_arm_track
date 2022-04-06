@@ -20,13 +20,15 @@ class FrameGrabber {
   FrameGrabber(const FrameGrabberOptions* options);
 
   ~FrameGrabber();
-  
+
   bool Init();
 
   bool TestGrabFrameOneCamera();
 
  private:
   int SetSoftTriggerConf(IMV_HANDLE dev_handle);
+
+  void ExecuteSoftTrigger(IMV_HANDLE dev_handle, const size_t max_frames);
 
   const FrameGrabberOptions* options_;
 

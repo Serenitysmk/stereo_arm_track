@@ -111,9 +111,12 @@ bool FrameGrabber::TestGrabFrameOneCamera() {
     return false;
   }
 
+  // Grab.
+  ExecuteSoftTrigger(dev_handle, 10);
+
   // Close camera.
   ret = IMV_Close(dev_handle);
-  
+
   if (ret != IMV_OK) {
     std::cerr << "ERROR: Close camera failed! Error code " << ret << std::endl;
     return false;
@@ -149,4 +152,18 @@ int FrameGrabber::SetSoftTriggerConf(IMV_HANDLE dev_handle) {
   }
 
   return ret;
+}
+
+void FrameGrabber::ExecuteSoftTrigger(IMV_HANDLE dev_handle,
+                                      const size_t max_frames) {
+  int ret = IMV_OK;
+
+  for (size_t i = 0; i < max_frames; i++) {
+    ret = IMV_ExecuteCommandFeature(dev_handle, "TriggerSoftware");
+    if (ret != IMV_OK) {
+      std::cerr << "WARNING: Execute TriggerSoftware failed! Error code " << ret
+                << std::endl;
+      continue;
+    }
+  }
 }
