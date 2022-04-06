@@ -4,6 +4,11 @@
 #include <util/misc.h>
 
 using namespace colmap;
+using namespace std::chrono_literals;
+
+namespace {
+bool g_is_exit_thread = false;
+}
 
 // Data frame callback function.
 static void OnGetFrame(IMV_Frame* p_frame, void* p_user) {
@@ -17,17 +22,17 @@ static void OnGetFrame(IMV_Frame* p_frame, void* p_user) {
   return;
 }
 
-void ExecuteSoftTrigger(IMV_HANDLE dev_handle, const size_t max_frames) {
+void ExecuteSoftTrigger(IMV_HANDLE dev_handle) {
   int ret = IMV_OK;
 
-  for (size_t i = 0; i < max_frames; i++) {
-    std::cout << "Executing frame " << i << std::endl;
+  while (!g_is_exit_thread) {
     ret = IMV_ExecuteCommandFeature(dev_handle, "TriggerSoftware");
     if (ret != IMV_OK) {
       std::cerr << "WARNING: Execute TriggerSoftware failed! Error code " << ret
                 << std::endl;
       continue;
     }
+    std::this_thread::sleep_for(50ms);
   }
 }
 
@@ -121,7 +126,14 @@ bool FrameGrabber::TestGrabFrameOneCamera() {
   }
 
   // Grab.
-  std::thread grab_worker(ExecuteSoftTrigger, dev_handle, 200);
+  std::thread grab_worker(ExecuteSoftTrigger, dev_handle);
+
+  g_is_exit_thread = false;
+
+  using namespace std::chrono_literals;
+  std::this_thread::sleep_for(2s);
+
+  g_is_exit_thread = true;
 
   grab_worker.join();
 
