@@ -19,11 +19,15 @@ class FrameGrabber {
  public:
   FrameGrabber(const FrameGrabberOptions* options);
 
+  ~FrameGrabber();
+  
   bool Init();
 
-  void TestGrabFrameOneCamera();
+  bool TestGrabFrameOneCamera();
 
  private:
+  int SetSoftTriggerConf(IMV_HANDLE dev_handle);
+
   const FrameGrabberOptions* options_;
 
   std::vector<IMV_HANDLE> device_handles_;
