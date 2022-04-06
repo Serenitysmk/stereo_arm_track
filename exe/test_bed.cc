@@ -8,7 +8,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Define variables
 ////////////////////////////////////////////////////////////////////////////////
-DEFINE_int32(num_cameras, 1, "Number of cameras.");
+DEFINE_int32(num_cameras, 4, "Number of cameras.");
 DEFINE_double(frame_rate, 25.0, "Frame rate of the video stream.");
 
 void RunTestFrameGrabber(const FrameGrabberOptions& grabber_options);
@@ -36,4 +36,6 @@ void RunTestFrameGrabber(const FrameGrabberOptions& grabber_options) {
     std::cerr << "ERROR: failed to initialize the frame grabber!" << std::endl;
     return;
   }
+
+  frame_grabber.TestGrabFrameOneCamera();
 }

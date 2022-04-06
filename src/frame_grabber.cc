@@ -26,10 +26,30 @@ bool FrameGrabber::Init() {
   }
 
   // Found devices.
-  if (device_info_list.nDevNum != options_->num_cameras) {
+  if (device_info_list.nDevNum < 1) {
+    std::cerr << "ERROR: No camera found." << std::endl;
+    return false;
+  } else if (device_info_list.nDevNum != options_->num_cameras) {
     std::cerr << "ERROR: found " << device_info_list.nDevNum << " cameras, but "
               << options_->num_cameras << " is expected." << std::endl;
     return false;
   }
+
+  device_handles_.resize(device_info_list.nDevNum);
+  for (size_t i = 0; i < device_info_list.nDevNum; i++) {
+    ret = IMV_CreateHandle(&device_handles_[i], modeByIndex, (void*)&i);
+    if (ret != IMV_OK) {
+      std::cerr << "ERROR: Create device handle failed! Error code " << ret
+                << std::endl;
+      return false;
+    }
+  }
+
+  std::cout << "Initialize success, " << device_handles_.size()
+            << " cameras are founded" << std::endl;
   return true;
+}
+
+void FrameGrabber::TestGrabFrameOneCamera() {
+  
 }

@@ -7,7 +7,7 @@ project(StereoArmTrack)
 ################################
 
 # OpenCV
-find_package(OpenCV 3 REQUIRED)
+find_package(OpenCV REQUIRED)
 
 # COLMAP
 find_package(COLMAP REQUIRED)
