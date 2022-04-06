@@ -12,7 +12,8 @@ using namespace std::chrono_literals;
 
 namespace {
 bool g_is_exit_thread = false;
-}
+unsigned char* g_convert_buf = nullptr;
+}  // namespace
 
 // Data frame callback function.
 static void OnGetFrame(IMV_Frame* p_frame, void* p_user) {
@@ -24,12 +25,46 @@ static void OnGetFrame(IMV_Frame* p_frame, void* p_user) {
   std::cout << "Get frame blockId = " << p_frame->frameInfo.blockId
             << std::endl;
 
-  const size_t width = p_frame->frameInfo.width;
-  const size_t height = p_frame->frameInfo.height;
-  cv::Mat frame(height, width, CV_8UC3, p_frame->pData);
+  int ret = IMV_OK;
+  IMV_PixelConvertParam pixel_convert_params;
+  unsigned char* image_data = nullptr;
+  IMV_EPixelType pixel_format = gvspPixelMono8;
 
-  cv::imshow("Image", frame);
-  cv::waitKey(1);
+  // Memory allocation buffer.
+
+  // mono8 and BGR8 raw data does not to be converted.
+  if ((p_frame->frameInfo.pixelFormat != gvspPixelMono8) &&
+      (p_frame->frameInfo.pixelFormat != gvspPixelBGR8)) {
+    pixel_convert_params.nWidth = p_frame->frameInfo.width;
+    pixel_convert_params.nHeight = p_frame->frameInfo.height;
+    pixel_convert_params.ePixelFormat = p_frame->frameInfo.pixelFormat;
+    pixel_convert_params.pSrcData = p_frame->pData;
+    pixel_convert_params.nSrcDataLen = p_frame->frameInfo.size;
+    pixel_convert_params.nPaddingX = p_frame->frameInfo.paddingX;
+    pixel_convert_params.nPaddingY = p_frame->frameInfo.paddingY;
+    pixel_convert_params.eBayerDemosaic = demosaicNearestNeighbor;
+    pixel_convert_params.eDstPixelFormat = gvspPixelBGR8;
+    pixel_convert_params.pDstBuf = g_convert_buf;
+    pixel_convert_params.nDstBufSize =
+        p_frame->frameInfo.width * p_frame->frameInfo.height * 3;
+
+    ret = IMV_PixelConvert((IMV_HANDLE)p_user, &pixel_convert_params);
+    if (ret != IMV_OK) {
+      std::cerr << "ERROR: Image convert to BGR failed! Error code " << ret
+                << std::endl;
+    }
+    image_data = g_convert_buf;
+    pixel_format = gvspPixelBGR8;
+  } else {
+    image_data = p_frame->pData;
+    pixel_format = p_frame->frameInfo.pixelFormat;
+  }
+
+  cv::Size image_size(p_frame->frameInfo.width, p_frame->frameInfo.height);
+  cv::Mat frame(image_size, CV_8UC3, (uchar*)image_data);
+
+  std::cout << "Width: " << frame.rows << ", height: " << frame.cols
+            << std::endl;
   return;
 }
 
@@ -121,10 +156,15 @@ bool FrameGrabber::TestGrabFrameOneCamera() {
   }
 
   // Register data frame callback function.
-  ret = IMV_AttachGrabbing(dev_handle, OnGetFrame, NULL);
+  ret = IMV_AttachGrabbing(dev_handle, OnGetFrame, (void*)dev_handle);
   if (ret != IMV_OK) {
     std::cerr << "ERROR: Attach grabbing failed! Error code " << ret
               << std::endl;
+    return false;
+  }
+
+  ret = MallocConvertBuffer(dev_handle);
+  if (ret != IMV_OK) {
     return false;
   }
 
@@ -193,4 +233,46 @@ int FrameGrabber::SetSoftTriggerConf(IMV_HANDLE dev_handle) {
   }
 
   return ret;
+}
+
+int FrameGrabber::MallocConvertBuffer(IMV_HANDLE dev_handle) {
+  int ret = IMV_OK;
+  uint64_t pixel_format_val = 0;
+  int64_t width = 0;
+  int64_t height = 0;
+
+  ret = IMV_GetEnumFeatureValue(dev_handle, "PixelFormat", &pixel_format_val);
+
+  if (ret != IMV_OK) {
+    std::cerr << "ERROR: Get PixelFormat feature value failed! Error code "
+              << ret << std::endl;
+    return ret;
+  }
+
+  if (pixel_format_val == (uint64_t)gvspPixelMono8 ||
+      pixel_format_val == (uint64_t)gvspPixelBGR8) {
+    return IMV_OK;
+  }
+
+  ret = IMV_GetIntFeatureValue(dev_handle, "Width", &width);
+  if (ret != IMV_OK) {
+    std::cerr << "ERROR: Get Width feature value failed! Error code " << ret
+              << std::endl;
+    return ret;
+  }
+
+  ret = IMV_GetIntFeatureValue(dev_handle, "Height", &height);
+  if (ret != IMV_OK) {
+    std::cerr << "ERROR: Get Height feature value failed! Error code " << ret
+              << std::endl;
+    return ret;
+  }
+
+  g_convert_buf = new unsigned char[(int)width * (int)height * 3];
+  if (g_convert_buf == nullptr) {
+    std::cerr << "ERROR: Malloc g_convert_buf failed!" << std::endl;
+    return IMV_NO_MEMORY;
+  }
+
+  return IMV_OK;
 }
