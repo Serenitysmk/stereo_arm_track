@@ -113,10 +113,12 @@ bool FrameGrabber::TestGrabFrameOneCamera() {
 
   // Close camera.
   ret = IMV_Close(dev_handle);
+  
   if (ret != IMV_OK) {
     std::cerr << "ERROR: Close camera failed! Error code " << ret << std::endl;
     return false;
   }
+  return true;
 }
 
 int FrameGrabber::SetSoftTriggerConf(IMV_HANDLE dev_handle) {
