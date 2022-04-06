@@ -60,11 +60,14 @@ static void OnGetFrame(IMV_Frame* p_frame, void* p_user) {
     pixel_format = p_frame->frameInfo.pixelFormat;
   }
 
+
   cv::Size image_size(p_frame->frameInfo.width, p_frame->frameInfo.height);
   cv::Mat frame(image_size, CV_8UC3, (uchar*)image_data);
 
-  std::cout << "Width: " << frame.rows << ", height: " << frame.cols
+  std::cout << "Width: " << frame.cols << ", height: " << frame.rows
             << std::endl;
+  cv::imshow("img", frame);
+  cv::waitKey(1);
   return;
 }
 
@@ -136,12 +139,12 @@ bool FrameGrabber::Init() {
 }
 
 bool FrameGrabber::TestGrabFrameOneCamera() {
-  std::cout << "Test grabbing frame for camera " << 0 << std::endl;
+  std::cout << "Test grabbing frame for camera " << 1 << std::endl;
 
   // Open Camera.
   int ret = IMV_OK;
 
-  IMV_HANDLE dev_handle = device_handles_[0];
+  IMV_HANDLE dev_handle = device_handles_[2];
 
   ret = IMV_Open(dev_handle);
   if (ret != IMV_OK) {
@@ -168,6 +171,10 @@ bool FrameGrabber::TestGrabFrameOneCamera() {
     return false;
   }
 
+  IMV_SetIntFeatureValue(dev_handle, "ExposureTargetBrightness", 100);
+  IMV_SetDoubleFeatureValue(dev_handle, "GainRaw", 4.0);
+  IMV_SetDoubleFeatureValue(dev_handle, "Gamma", 0.45);
+
   // Start grabbing.
   ret = IMV_StartGrabbing(dev_handle);
   if (ret != IMV_OK) {
@@ -182,7 +189,7 @@ bool FrameGrabber::TestGrabFrameOneCamera() {
   g_is_exit_thread = false;
 
   using namespace std::chrono_literals;
-  std::this_thread::sleep_for(2s);
+  std::this_thread::sleep_for(10s);
 
   g_is_exit_thread = true;
 
