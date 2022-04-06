@@ -5,7 +5,7 @@
 using namespace colmap;
 
 // Data frame callback function.
-void OnGetFrame(IMV_Frame* p_frame, void* p_user) {
+static void OnGetFrame(IMV_Frame* p_frame, void* p_user) {
   if (p_frame == nullptr) {
     std::cout << "WARNING: Frame pointer is NULL" << std::endl;
     return;
@@ -13,6 +13,7 @@ void OnGetFrame(IMV_Frame* p_frame, void* p_user) {
 
   std::cout << "Get frame blockId = " << p_frame->frameInfo.blockId
             << std::endl;
+  return;
 }
 
 bool FrameGrabberOptions::Check() const {
@@ -104,7 +105,7 @@ bool FrameGrabber::TestGrabFrameOneCamera() {
     return false;
   }
 
-    // Grab.
+  // Grab.
   ExecuteSoftTrigger(dev_handle, 10);
 
   // Stop grabbing.
