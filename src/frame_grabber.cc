@@ -1,5 +1,6 @@
 #include "frame_grabber.h"
 
+#include <thread>
 #include <util/misc.h>
 
 using namespace colmap;
@@ -14,6 +15,20 @@ static void OnGetFrame(IMV_Frame* p_frame, void* p_user) {
   std::cout << "Get frame blockId = " << p_frame->frameInfo.blockId
             << std::endl;
   return;
+}
+
+void ExecuteSoftTrigger(IMV_HANDLE dev_handle, const size_t max_frames) {
+  int ret = IMV_OK;
+
+  for (size_t i = 0; i < max_frames; i++) {
+    std::cout << "Executing frame " << i << std::endl;
+    ret = IMV_ExecuteCommandFeature(dev_handle, "TriggerSoftware");
+    if (ret != IMV_OK) {
+      std::cerr << "WARNING: Execute TriggerSoftware failed! Error code " << ret
+                << std::endl;
+      continue;
+    }
+  }
 }
 
 bool FrameGrabberOptions::Check() const {
@@ -106,7 +121,9 @@ bool FrameGrabber::TestGrabFrameOneCamera() {
   }
 
   // Grab.
-  ExecuteSoftTrigger(dev_handle, 10);
+  std::thread grab_worker(ExecuteSoftTrigger, dev_handle, 200);
+
+  grab_worker.join();
 
   // Stop grabbing.
   ret = IMV_StopGrabbing(dev_handle);
@@ -153,19 +170,4 @@ int FrameGrabber::SetSoftTriggerConf(IMV_HANDLE dev_handle) {
   }
 
   return ret;
-}
-
-void FrameGrabber::ExecuteSoftTrigger(IMV_HANDLE dev_handle,
-                                      const size_t max_frames) {
-  int ret = IMV_OK;
-
-  for (size_t i = 0; i < max_frames; i++) {
-    std::cout << "Executing frame " << i << std::endl;
-    ret = IMV_ExecuteCommandFeature(dev_handle, "TriggerSoftware");
-    if (ret != IMV_OK) {
-      std::cerr << "WARNING: Execute TriggerSoftware failed! Error code " << ret
-                << std::endl;
-      continue;
-    }
-  }
 }

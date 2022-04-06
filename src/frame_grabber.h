@@ -28,8 +28,6 @@ class FrameGrabber {
  private:
   int SetSoftTriggerConf(IMV_HANDLE dev_handle);
 
-  void ExecuteSoftTrigger(IMV_HANDLE dev_handle, const size_t max_frames);
-
   const FrameGrabberOptions* options_;
 
   std::vector<IMV_HANDLE> device_handles_;
