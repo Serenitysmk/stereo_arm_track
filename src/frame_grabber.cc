@@ -1,6 +1,10 @@
 #include "frame_grabber.h"
 
 #include <thread>
+
+#include <opencv2/core.hpp>
+#include <opencv2/highgui.hpp>
+
 #include <util/misc.h>
 
 using namespace colmap;
@@ -19,6 +23,13 @@ static void OnGetFrame(IMV_Frame* p_frame, void* p_user) {
 
   std::cout << "Get frame blockId = " << p_frame->frameInfo.blockId
             << std::endl;
+
+  const size_t width = p_frame->frameInfo.width;
+  const size_t height = p_frame->frameInfo.height;
+  cv::Mat frame(height, width, CV_8UC3, p_frame->pData);
+
+  cv::imshow("Image", frame);
+  cv::waitKey(1);
   return;
 }
 
