@@ -21,11 +21,20 @@ class FrameGrabber {
 
   ~FrameGrabber();
 
+  // Init frame grabber.
   bool Init();
+
+  // Close frame grabber.
+  bool Close();
 
   bool TestGrabFrameOneCamera();
 
  private:
+
+  bool InitCameras();
+
+  void ExecuteTrigger();
+
   int SetSoftTriggerConf(IMV_HANDLE dev_handle);
 
   int MallocConvertBuffer(IMV_HANDLE dev_handle);

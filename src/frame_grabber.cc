@@ -134,10 +134,8 @@ bool FrameGrabber::Init() {
 
   char vendor_name_cat[11];
   char camera_name_cat[16];
-  std::cout << "Initialize success, " << device_handles_.size()
-            << " cameras are founded" << std::endl;
 
-  // Print title line
+  // Print title line.
   std::cout << "\nIdx Type Vendor     Model      S/N             DeviceUserID  "
                "  IP Address    \n";
   std::cout << "---------------------------------------------------------------"
@@ -207,6 +205,44 @@ bool FrameGrabber::Init() {
     }
 
     printf("\n");
+  }
+
+  std::cout << "Prepare cameras to grab frames." << std::endl;
+
+  if (!InitCameras()) {
+    return false;
+  }
+
+  std::cout << "Finished initialization, cameras are ready." << std::endl;
+  return true;
+}
+
+bool FrameGrabber::Close() {
+  int ret = IMV_OK;
+  for (size_t camera_id = 0; camera_id < device_handles_.size(); camera_id++) {
+    IMV_HANDLE dev_handle = device_handles_[camera_id];
+    if (dev_handle == nullptr) {
+      continue;
+    }
+    if (IMV_IsOpen(dev_handle)) {
+      if (IMV_IsGrabbing(dev_handle)) {
+        // Stop grabbing.
+        ret = IMV_StopGrabbing(dev_handle);
+        if (ret != IMV_OK) {
+          std::cerr << "ERROR: Stop grabbing failed! Error code " << ret
+                    << std::endl;
+          return false;
+        }
+
+        // Close camera.
+        ret = IMV_Close(dev_handle);
+        if (ret != IMV_OK) {
+          std::cerr << "ERROR: Close camera failed! Error code " << ret
+                    << std::endl;
+          return false;
+        }
+      }
+    }
   }
   return true;
 }
@@ -281,6 +317,39 @@ bool FrameGrabber::TestGrabFrameOneCamera() {
   if (ret != IMV_OK) {
     std::cerr << "ERROR: Close camera failed! Error code " << ret << std::endl;
     return false;
+  }
+  return true;
+}
+
+bool FrameGrabber::InitCameras() {
+  // Open cameras.
+  for (size_t camera_id = 0; camera_id < device_handles_.size(); camera_id++) {
+    int ret = IMV_OK;
+
+    IMV_HANDLE dev_handle = device_handles_[camera_id];
+
+    ret = IMV_Open(dev_handle);
+    if (ret != IMV_OK) {
+      std::cerr << "ERROR: Open camera " << camera_id << " failed! Error code "
+                << ret << std::endl;
+      return false;
+    }
+
+    // Set software trigger config.
+    ret = SetSoftTriggerConf(dev_handle);
+    if (ret != IMV_OK) {
+      return false;
+    }
+
+    /// TODO: Load camera config files.
+
+    // Attach callback function.
+    ret = IMV_AttachGrabbing(dev_handle, OnGetFrame, (void*)dev_handle);
+    if (ret != IMV_OK) {
+      std::cerr << "ERROR: Attach grabbing failed! Error code " << ret
+                << std::endl;
+      return false;
+    }
   }
   return true;
 }
