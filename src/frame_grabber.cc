@@ -60,7 +60,6 @@ static void OnGetFrame(IMV_Frame* p_frame, void* p_user) {
     pixel_format = p_frame->frameInfo.pixelFormat;
   }
 
-
   cv::Size image_size(p_frame->frameInfo.width, p_frame->frameInfo.height);
   cv::Mat frame(image_size, CV_8UC3, (uchar*)image_data);
 
@@ -133,8 +132,82 @@ bool FrameGrabber::Init() {
     }
   }
 
+  char vendor_name_cat[11];
+  char camera_name_cat[16];
   std::cout << "Initialize success, " << device_handles_.size()
             << " cameras are founded" << std::endl;
+
+  // Print title line
+  std::cout << "\nIdx Type Vendor     Model      S/N             DeviceUserID  "
+               "  IP Address    \n";
+  std::cout << "---------------------------------------------------------------"
+               "---------------\n";
+
+  for (unsigned int camera_index = 0; camera_index < device_info_list.nDevNum;
+       camera_index++) {
+    IMV_DeviceInfo* p_dev_info = &device_info_list.pDevInfo[camera_index];
+    // 设备列表的相机索引  最大表示字数：3
+    // Camera index in device list, display in 3 characters
+    printf("%-3d", camera_index + 1);
+
+    // 相机的设备类型（GigE，U3V，CL，PCIe）
+    // Camera type
+    switch (p_dev_info->nCameraType) {
+      case typeGigeCamera:
+        printf(" GigE");
+        break;
+      case typeU3vCamera:
+        printf(" U3V ");
+        break;
+      case typeCLCamera:
+        printf(" CL  ");
+        break;
+      case typePCIeCamera:
+        printf(" PCIe");
+        break;
+      default:
+        printf("     ");
+        break;
+    }
+
+    // 制造商信息  最大表示字数：10
+    // Camera vendor name, display in 10 characters
+    if (strlen(p_dev_info->vendorName) > 10) {
+      memcpy(vendor_name_cat, p_dev_info->vendorName, 7);
+      vendor_name_cat[7] = '\0';
+      strcat(vendor_name_cat, "...");
+      printf(" %-10.10s", vendor_name_cat);
+    } else {
+      printf(" %-10.10s", p_dev_info->vendorName);
+    }
+
+    // 相机的型号信息 最大表示字数：10
+    // Camera model name, display in 10 characters
+    printf(" %-10.10s", p_dev_info->modelName);
+
+    // 相机的序列号 最大表示字数：15
+    // Camera serial number, display in 15 characters
+    printf(" %-15.15s", p_dev_info->serialNumber);
+
+    // 自定义用户ID 最大表示字数：15
+    // Camera user id, display in 15 characters
+    if (strlen(p_dev_info->cameraName) > 15) {
+      memcpy(camera_name_cat, p_dev_info->cameraName, 12);
+      camera_name_cat[12] = '\0';
+      strcat(camera_name_cat, "...");
+      printf(" %-15.15s", camera_name_cat);
+    } else {
+      printf(" %-15.15s", p_dev_info->cameraName);
+    }
+
+    // GigE相机时获取IP地址
+    // IP address of GigE camera
+    if (p_dev_info->nCameraType == typeGigeCamera) {
+      printf(" %s", p_dev_info->DeviceSpecificInfo.gigeDeviceInfo.ipAddress);
+    }
+
+    printf("\n");
+  }
   return true;
 }
 
