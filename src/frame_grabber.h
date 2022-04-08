@@ -1,6 +1,7 @@
 #ifndef SRC_FRAME_GRABBER_H_
 #define SRC_FRAME_GRABBER_H_
 
+#include <mutex>
 #include <vector>
 
 #include <IMVApi.h>
@@ -30,7 +31,12 @@ class FrameGrabber {
   bool TestGrabFrameOneCamera();
 
  private:
+  // Display device info in the console.
+  void PrintDeviceInfo(const IMV_DeviceList& devce_info_list);
 
+  // Initialize the cameras and start grabbing,
+  // but the camera won't grab a frame until it
+  // revices a trigger signal.
   bool InitCameras();
 
   void ExecuteTrigger();
@@ -41,7 +47,13 @@ class FrameGrabber {
 
   const FrameGrabberOptions* options_;
 
+  // Device handles.
   std::vector<IMV_HANDLE> device_handles_;
+
+  // Buffers for converting frames.
+  unsigned char* convert_buffer_ = nullptr;
+
+  std::mutex convert_buffer_mutex_;
 };
 
 #endif  // STEREO_ARM_TRACK_FRAME_GRABBER_H_

@@ -8,15 +8,14 @@
 #include <util/misc.h>
 
 using namespace colmap;
-using namespace std::chrono_literals;
 
 namespace {
 bool g_is_exit_thread = false;
-unsigned char* g_convert_buf = nullptr;
+unsigned char* g_convert_buffer = nullptr;
 }  // namespace
 
 // Data frame callback function.
-static void OnGetFrame(IMV_Frame* p_frame, void* p_user) {
+void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
   if (p_frame == nullptr) {
     std::cout << "WARNING: Frame pointer is NULL" << std::endl;
     return;
@@ -30,8 +29,6 @@ static void OnGetFrame(IMV_Frame* p_frame, void* p_user) {
   unsigned char* image_data = nullptr;
   IMV_EPixelType pixel_format = gvspPixelMono8;
 
-  // Memory allocation buffer.
-
   // mono8 and BGR8 raw data does not to be converted.
   if ((p_frame->frameInfo.pixelFormat != gvspPixelMono8) &&
       (p_frame->frameInfo.pixelFormat != gvspPixelBGR8)) {
@@ -44,7 +41,7 @@ static void OnGetFrame(IMV_Frame* p_frame, void* p_user) {
     pixel_convert_params.nPaddingY = p_frame->frameInfo.paddingY;
     pixel_convert_params.eBayerDemosaic = demosaicNearestNeighbor;
     pixel_convert_params.eDstPixelFormat = gvspPixelBGR8;
-    pixel_convert_params.pDstBuf = g_convert_buf;
+    pixel_convert_params.pDstBuf = g_convert_buffer;
     pixel_convert_params.nDstBufSize =
         p_frame->frameInfo.width * p_frame->frameInfo.height * 3;
 
@@ -53,7 +50,7 @@ static void OnGetFrame(IMV_Frame* p_frame, void* p_user) {
       std::cerr << "ERROR: Image convert to BGR failed! Error code " << ret
                 << std::endl;
     }
-    image_data = g_convert_buf;
+    image_data = g_convert_buffer;
     pixel_format = gvspPixelBGR8;
   } else {
     image_data = p_frame->pData;
@@ -80,7 +77,7 @@ void ExecuteSoftTrigger(IMV_HANDLE dev_handle) {
                 << std::endl;
       continue;
     }
-    std::this_thread::sleep_for(50ms);
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
   }
 }
 
@@ -132,6 +129,129 @@ bool FrameGrabber::Init() {
     }
   }
 
+  MallocConvertBuffer(device_handles_[0]);
+
+  // Print device info list.
+  PrintDeviceInfo(device_info_list);
+
+  std::cout << "Prepare cameras to grab frames." << std::endl;
+
+  // Initialize the cameras and start grabbing,
+  // but the camera won't grab a frame until it
+  // revices a trigger signal.
+  if (!InitCameras()) {
+    return false;
+  }
+
+  std::cout << "Finished initialization, cameras are ready." << std::endl;
+  return true;
+}
+
+bool FrameGrabber::Close() {
+  int ret = IMV_OK;
+  for (size_t camera_id = 0; camera_id < device_handles_.size(); camera_id++) {
+    IMV_HANDLE dev_handle = device_handles_[camera_id];
+    if (dev_handle == nullptr) {
+      continue;
+    }
+    if (IMV_IsOpen(dev_handle)) {
+      if (IMV_IsGrabbing(dev_handle)) {
+        // Stop grabbing.
+        ret = IMV_StopGrabbing(dev_handle);
+        if (ret != IMV_OK) {
+          std::cerr << "ERROR: Stop grabbing failed! Error code " << ret
+                    << std::endl;
+          return false;
+        }
+
+        // Close camera.
+        ret = IMV_Close(dev_handle);
+        if (ret != IMV_OK) {
+          std::cerr << "ERROR: Close camera failed! Error code " << ret
+                    << std::endl;
+          return false;
+        }
+      }
+    }
+  }
+  return true;
+}
+
+bool FrameGrabber::TestGrabFrameOneCamera() {
+  std::cout << "Test grabbing frame for camera " << 1 << std::endl;
+
+  // Open Camera.
+  int ret = IMV_OK;
+
+  IMV_HANDLE dev_handle = device_handles_[2];
+
+  ret = IMV_Open(dev_handle);
+  if (ret != IMV_OK) {
+    std::cerr << "Open camera failed! Error code " << ret << std::endl;
+    return false;
+  }
+
+  // Set software trigger config.
+  ret = SetSoftTriggerConf(dev_handle);
+  if (ret != IMV_OK) {
+    return false;
+  }
+
+  // Register data frame callback function.
+  ret = IMV_AttachGrabbing(dev_handle, OnFrameGrabbed, (void*)dev_handle);
+  if (ret != IMV_OK) {
+    std::cerr << "ERROR: Attach grabbing failed! Error code " << ret
+              << std::endl;
+    return false;
+  }
+
+  ret = MallocConvertBuffer(dev_handle);
+  if (ret != IMV_OK) {
+    return false;
+  }
+
+  IMV_SetIntFeatureValue(dev_handle, "ExposureTargetBrightness", 100);
+  IMV_SetDoubleFeatureValue(dev_handle, "GainRaw", 4.0);
+  IMV_SetDoubleFeatureValue(dev_handle, "Gamma", 0.45);
+
+  // Start grabbing.
+  ret = IMV_StartGrabbing(dev_handle);
+  if (ret != IMV_OK) {
+    std::cerr << "ERROR: Start grabbing failed! Error code " << ret
+              << std::endl;
+    return false;
+  }
+
+  // Grab.
+  std::thread grab_worker(ExecuteSoftTrigger, dev_handle);
+
+  g_is_exit_thread = false;
+
+  using namespace std::chrono_literals;
+  std::this_thread::sleep_for(10s);
+
+  g_is_exit_thread = true;
+
+  grab_worker.join();
+
+  // Stop grabbing.
+  ret = IMV_StopGrabbing(dev_handle);
+  if (ret != IMV_OK) {
+    std::cerr << "ERROR: Stop grabbing failed! Error code " << ret << std::endl;
+    return false;
+  }
+
+  // Close camera.
+  ret = IMV_Close(dev_handle);
+
+  if (ret != IMV_OK) {
+    std::cerr << "ERROR: Close camera failed! Error code " << ret << std::endl;
+    return false;
+  }
+  return true;
+}
+
+void FrameGrabber::PrintDeviceInfo(const IMV_DeviceList& device_info_list) {
   char vendor_name_cat[11];
   char camera_name_cat[16];
 
@@ -206,119 +326,6 @@ bool FrameGrabber::Init() {
 
     printf("\n");
   }
-
-  std::cout << "Prepare cameras to grab frames." << std::endl;
-
-  if (!InitCameras()) {
-    return false;
-  }
-
-  std::cout << "Finished initialization, cameras are ready." << std::endl;
-  return true;
-}
-
-bool FrameGrabber::Close() {
-  int ret = IMV_OK;
-  for (size_t camera_id = 0; camera_id < device_handles_.size(); camera_id++) {
-    IMV_HANDLE dev_handle = device_handles_[camera_id];
-    if (dev_handle == nullptr) {
-      continue;
-    }
-    if (IMV_IsOpen(dev_handle)) {
-      if (IMV_IsGrabbing(dev_handle)) {
-        // Stop grabbing.
-        ret = IMV_StopGrabbing(dev_handle);
-        if (ret != IMV_OK) {
-          std::cerr << "ERROR: Stop grabbing failed! Error code " << ret
-                    << std::endl;
-          return false;
-        }
-
-        // Close camera.
-        ret = IMV_Close(dev_handle);
-        if (ret != IMV_OK) {
-          std::cerr << "ERROR: Close camera failed! Error code " << ret
-                    << std::endl;
-          return false;
-        }
-      }
-    }
-  }
-  return true;
-}
-
-bool FrameGrabber::TestGrabFrameOneCamera() {
-  std::cout << "Test grabbing frame for camera " << 1 << std::endl;
-
-  // Open Camera.
-  int ret = IMV_OK;
-
-  IMV_HANDLE dev_handle = device_handles_[2];
-
-  ret = IMV_Open(dev_handle);
-  if (ret != IMV_OK) {
-    std::cerr << "Open camera failed! Error code " << ret << std::endl;
-    return false;
-  }
-
-  // Set software trigger config.
-  ret = SetSoftTriggerConf(dev_handle);
-  if (ret != IMV_OK) {
-    return false;
-  }
-
-  // Register data frame callback function.
-  ret = IMV_AttachGrabbing(dev_handle, OnGetFrame, (void*)dev_handle);
-  if (ret != IMV_OK) {
-    std::cerr << "ERROR: Attach grabbing failed! Error code " << ret
-              << std::endl;
-    return false;
-  }
-
-  ret = MallocConvertBuffer(dev_handle);
-  if (ret != IMV_OK) {
-    return false;
-  }
-
-  IMV_SetIntFeatureValue(dev_handle, "ExposureTargetBrightness", 100);
-  IMV_SetDoubleFeatureValue(dev_handle, "GainRaw", 4.0);
-  IMV_SetDoubleFeatureValue(dev_handle, "Gamma", 0.45);
-
-  // Start grabbing.
-  ret = IMV_StartGrabbing(dev_handle);
-  if (ret != IMV_OK) {
-    std::cerr << "ERROR: Start grabbing failed! Error code " << ret
-              << std::endl;
-    return false;
-  }
-
-  // Grab.
-  std::thread grab_worker(ExecuteSoftTrigger, dev_handle);
-
-  g_is_exit_thread = false;
-
-  using namespace std::chrono_literals;
-  std::this_thread::sleep_for(10s);
-
-  g_is_exit_thread = true;
-
-  grab_worker.join();
-
-  // Stop grabbing.
-  ret = IMV_StopGrabbing(dev_handle);
-  if (ret != IMV_OK) {
-    std::cerr << "ERROR: Stop grabbing failed! Error code " << ret << std::endl;
-    return false;
-  }
-
-  // Close camera.
-  ret = IMV_Close(dev_handle);
-
-  if (ret != IMV_OK) {
-    std::cerr << "ERROR: Close camera failed! Error code " << ret << std::endl;
-    return false;
-  }
-  return true;
 }
 
 bool FrameGrabber::InitCameras() {
@@ -344,9 +351,16 @@ bool FrameGrabber::InitCameras() {
     /// TODO: Load camera config files.
 
     // Attach callback function.
-    ret = IMV_AttachGrabbing(dev_handle, OnGetFrame, (void*)dev_handle);
+    ret = IMV_AttachGrabbing(dev_handle, OnFrameGrabbed, (void*)dev_handle);
     if (ret != IMV_OK) {
       std::cerr << "ERROR: Attach grabbing failed! Error code " << ret
+                << std::endl;
+      return false;
+    }
+
+    ret = IMV_StartGrabbing(dev_handle);
+    if (ret != IMV_OK) {
+      std::cerr << "ERROR: Start grabbing failed! Error code " << ret
                 << std::endl;
       return false;
     }
@@ -417,9 +431,10 @@ int FrameGrabber::MallocConvertBuffer(IMV_HANDLE dev_handle) {
     return ret;
   }
 
-  g_convert_buf = new unsigned char[(int)width * (int)height * 3];
-  if (g_convert_buf == nullptr) {
-    std::cerr << "ERROR: Malloc g_convert_buf failed!" << std::endl;
+  convert_buffer_ = new unsigned char[(int)width * (int)height * 3];
+  if (convert_buffer_ == nullptr) {
+    std::cerr << "ERROR: Allocation memory to convert buffer failed!"
+              << std::endl;
     return IMV_NO_MEMORY;
   }
 
