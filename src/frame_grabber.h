@@ -30,6 +30,11 @@ class FrameGrabber {
   // Grab next frames (Multiple cameras).
   std::vector<cv::Mat> Next();
 
+  // Record videos for a period of time.
+  void Record(const std::string& output_dir,
+              const std::chrono::minutes& time,
+              const double frame_rate, const bool display);
+
   // Close frame grabber.
   bool Close();
 
@@ -52,7 +57,6 @@ class FrameGrabber {
 
   // Device handles.
   std::vector<IMV_HANDLE> device_handles_;
-
 };
 
 #endif  // STEREO_ARM_TRACK_FRAME_GRABBER_H_

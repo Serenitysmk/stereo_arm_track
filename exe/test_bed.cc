@@ -23,7 +23,11 @@ int main(int argc, char** argv) {
   grabber_options.num_cameras = FLAGS_num_cameras;
   grabber_options.frame_rate = FLAGS_frame_rate;
 
-  RunTestFrameGrabber(grabber_options);
+  // RunTestFrameGrabber(grabber_options);
+
+  FrameGrabber grabber(&grabber_options);
+  
+  grabber.Record("./", std::chrono::minutes(1), 10.0, true);
   return EXIT_SUCCESS;
 }
 
@@ -42,17 +46,17 @@ void RunTestFrameGrabber(const FrameGrabberOptions& grabber_options) {
   std::vector<cv::Mat> frames = frame_grabber.Next();
 
   bool grab_success = true;
-  for(const cv::Mat& frame: frames){
-    if(frame.empty()) grab_success = false;
+  for (const cv::Mat& frame : frames) {
+    if (frame.empty()) grab_success = false;
   }
 
-  if(grab_success){
+  if (grab_success) {
     std::cout << "Grab success!" << std::endl;
-    for(size_t i = 0;i < frames.size(); i++){
+    for (size_t i = 0; i < frames.size(); i++) {
       cv::imshow("Frame_" + std::to_string(i), frames[i]);
     }
     cv::waitKey(0);
-  }else{
+  } else {
     std::cerr << "ERROR: Grab frames failed!" << std::endl;
   }
 

@@ -17,8 +17,6 @@ unsigned char* g_convert_buffer = nullptr;
 std::unordered_map<IMV_HANDLE, cv::Mat> g_grabbed_frames;
 std::mutex g_grab_frame_mutex;
 
-}  // namespace
-
 // Data frame callback function.
 void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
   if (p_frame == nullptr) {
@@ -93,6 +91,8 @@ void ExecuteSoftTrigger(IMV_HANDLE dev_handle) {
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
   }
 }
+
+}  // namespace
 
 bool FrameGrabberOptions::Check() const {
   CHECK_OPTION_GE(num_cameras, 1);
@@ -175,9 +175,44 @@ std::vector<cv::Mat> FrameGrabber::Next() {
   }
 
   for (IMV_HANDLE dev_handle : device_handles_) {
-    grabbed_frames.push_back(g_grabbed_frames[dev_handle]);
+    {
+      std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
+      grabbed_frames.push_back(g_grabbed_frames[dev_handle]);
+    }
   }
   return grabbed_frames;
+}
+
+void FrameGrabber::Record(const std::string& output_dir,
+                          const std::chrono::minutes& time,
+                          const double frame_rate, const bool display) {
+  const size_t num_cameras = device_handles_.size();
+  std::vector<std::string> output_paths;
+  output_paths.reserve(num_cameras);
+
+  for (size_t camera_idx = 0; camera_idx < num_cameras; camera_idx) {
+    std::stringstream stream;
+    stream << output_dir << "/"
+           << "video_" << std::to_string(camera_idx) << ".ts";
+    output_paths.emplace_back(stream.str());
+  }
+
+  // Recording loop;
+
+  double recorded_time = 0.0;
+  auto start = std::chrono::high_resolution_clock::now();
+  auto end = std::chrono::high_resolution_clock::now() + time;
+
+  while (std::chrono::high_resolution_clock::now() < end) {
+    std::cout << "Do something..." << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+  }
+  end = std::chrono::high_resolution_clock::now();
+  recorded_time =
+      std::chrono::duration_cast<std::chrono::minutes>(end - start).count();
+  std::cout << "Video recording stopped, time: " << recorded_time << " minutes"
+            << std::endl;
+  return;
 }
 
 bool FrameGrabber::Close() {
