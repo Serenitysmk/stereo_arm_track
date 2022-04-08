@@ -33,7 +33,7 @@ void RunTestFrameGrabber(const FrameGrabberOptions& grabber_options) {
   FrameGrabber frame_grabber(&grabber_options);
 
   if (!frame_grabber.Init()) {
-    std::cerr << "ERROR: failed to initialize the frame grabber!" << std::endl;
+    std::cerr << "ERROR: Failed to initialize the frame grabber!" << std::endl;
     return;
   }
 
