@@ -117,7 +117,7 @@ bool FrameGrabber::Init() {
   IMV_DeviceList device_info_list;
   ret = IMV_EnumDevices(&device_info_list, interfaceTypeUsb3);
   if (ret != IMV_OK) {
-    std::cerr << "ERROR: failed to find camera devices! Error code " << ret
+    std::cerr << "ERROR: Failed to find camera devices! Error code " << ret
               << std::endl;
     return false;
   }
@@ -127,7 +127,7 @@ bool FrameGrabber::Init() {
     std::cerr << "ERROR: No camera found." << std::endl;
     return false;
   } else if (device_info_list.nDevNum != options_->num_cameras) {
-    std::cerr << "ERROR: found " << device_info_list.nDevNum << " cameras, but "
+    std::cerr << "ERROR: Found " << device_info_list.nDevNum << " cameras, but "
               << options_->num_cameras << " is expected." << std::endl;
     return false;
   }
