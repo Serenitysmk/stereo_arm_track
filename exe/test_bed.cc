@@ -37,5 +37,7 @@ void RunTestFrameGrabber(const FrameGrabberOptions& grabber_options) {
     return;
   }
 
-  frame_grabber.TestGrabFrameOneCamera();
+  std::vector<cv::Mat> frames = frame_grabber.Next();
+
+  frame_grabber.Close();
 }

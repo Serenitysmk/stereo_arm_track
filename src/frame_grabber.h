@@ -4,6 +4,8 @@
 #include <mutex>
 #include <vector>
 
+#include <opencv2/core.hpp>
+
 #include <IMVApi.h>
 
 struct FrameGrabberOptions {
@@ -26,7 +28,7 @@ class FrameGrabber {
   bool Init();
 
   // Grab next frame.
-  void Next();
+  std::vector<cv::Mat> Next();
 
   // Close frame grabber.
   bool Close();

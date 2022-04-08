@@ -1,8 +1,8 @@
 #include "frame_grabber.h"
 
 #include <thread>
+#include <unordered_map>
 
-#include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 
 #include <util/misc.h>
@@ -12,8 +12,7 @@ using namespace colmap;
 namespace {
 bool g_is_exit_thread = false;
 unsigned char* g_convert_buffer = nullptr;
-
-std::vector<cv::Mat> g_grabbed_frames;
+std::unordered_map<IMV_HANDLE, cv::Mat> g_grabbed_frames;
 
 }  // namespace
 
@@ -23,6 +22,8 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
     std::cout << "WARNING: Frame pointer is NULL" << std::endl;
     return;
   }
+
+  IMV_HANDLE dev_handle = (IMV_HANDLE)p_user;
 
   std::cout << "Get frame blockId = " << p_frame->frameInfo.blockId
             << std::endl;
@@ -48,7 +49,7 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
     pixel_convert_params.nDstBufSize =
         p_frame->frameInfo.width * p_frame->frameInfo.height * 3;
 
-    ret = IMV_PixelConvert((IMV_HANDLE)p_user, &pixel_convert_params);
+    ret = IMV_PixelConvert(dev_handle, &pixel_convert_params);
     if (ret != IMV_OK) {
       std::cerr << "ERROR: Image convert to BGR failed! Error code " << ret
                 << std::endl;
@@ -61,11 +62,12 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
   }
 
   cv::Size image_size(p_frame->frameInfo.width, p_frame->frameInfo.height);
-  g_grabbed_frames[0] = cv::Mat(image_size, CV_8UC3, (uchar*)image_data);
+  g_grabbed_frames[dev_handle] =
+      cv::Mat(image_size, CV_8UC3, (uchar*)image_data);
 
-  std::cout << "Width: " << g_grabbed_frames[0].cols
-            << ", height: " << g_grabbed_frames[0].rows << std::endl;
-  cv::imshow("img", g_grabbed_frames[0]);
+  std::cout << "Width: " << g_grabbed_frames[dev_handle].cols
+            << ", height: " << g_grabbed_frames[dev_handle].rows << std::endl;
+  cv::imshow("img", g_grabbed_frames[dev_handle]);
   cv::waitKey(1);
   return;
 }
@@ -150,7 +152,25 @@ bool FrameGrabber::Init() {
   return true;
 }
 
-void FrameGrabber::Next() {}
+std::vector<cv::Mat> FrameGrabber::Next() {
+  int ret = IMV_OK;
+  std::vector<cv::Mat> grabbed_frames;
+  grabbed_frames.reserve(device_handles_.size());
+
+  // Execute all triggers.
+  for (IMV_HANDLE dev_handle : device_handles_) {
+    ret = IMV_ExecuteCommandFeature(dev_handle, "TriggerSoftware");
+    if (ret != IMV_OK) {
+      std::cerr << "WARNING: Execute TriggerSoftware failed! Error code " << ret
+                << std::endl;
+    }
+  }
+
+  for (IMV_HANDLE dev_handle : device_handles_) {
+    grabbed_frames.push_back(g_grabbed_frames[dev_handle]);
+  }
+  return grabbed_frames;
+}
 
 bool FrameGrabber::Close() {
   int ret = IMV_OK;
