@@ -12,6 +12,9 @@ using namespace colmap;
 namespace {
 bool g_is_exit_thread = false;
 unsigned char* g_convert_buffer = nullptr;
+
+std::vector<cv::Mat> g_grabbed_frames;
+
 }  // namespace
 
 // Data frame callback function.
@@ -58,11 +61,11 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
   }
 
   cv::Size image_size(p_frame->frameInfo.width, p_frame->frameInfo.height);
-  cv::Mat frame(image_size, CV_8UC3, (uchar*)image_data);
+  g_grabbed_frames[0] = cv::Mat(image_size, CV_8UC3, (uchar*)image_data);
 
-  std::cout << "Width: " << frame.cols << ", height: " << frame.rows
-            << std::endl;
-  cv::imshow("img", frame);
+  std::cout << "Width: " << g_grabbed_frames[0].cols
+            << ", height: " << g_grabbed_frames[0].rows << std::endl;
+  cv::imshow("img", g_grabbed_frames[0]);
   cv::waitKey(1);
   return;
 }
@@ -147,10 +150,13 @@ bool FrameGrabber::Init() {
   return true;
 }
 
+void FrameGrabber::Next() {}
+
 bool FrameGrabber::Close() {
   int ret = IMV_OK;
-  for (size_t camera_id = 0; camera_id < device_handles_.size(); camera_id++) {
-    IMV_HANDLE dev_handle = device_handles_[camera_id];
+  for (size_t camera_idx = 0; camera_idx < device_handles_.size();
+       camera_idx++) {
+    IMV_HANDLE dev_handle = device_handles_[camera_idx];
     if (dev_handle == nullptr) {
       continue;
     }
@@ -328,46 +334,6 @@ void FrameGrabber::PrintDeviceInfo(const IMV_DeviceList& device_info_list) {
   }
 }
 
-bool FrameGrabber::InitCameras() {
-  // Open cameras.
-  for (size_t camera_id = 0; camera_id < device_handles_.size(); camera_id++) {
-    int ret = IMV_OK;
-
-    IMV_HANDLE dev_handle = device_handles_[camera_id];
-
-    ret = IMV_Open(dev_handle);
-    if (ret != IMV_OK) {
-      std::cerr << "ERROR: Open camera " << camera_id << " failed! Error code "
-                << ret << std::endl;
-      return false;
-    }
-
-    // Set software trigger config.
-    ret = SetSoftTriggerConf(dev_handle);
-    if (ret != IMV_OK) {
-      return false;
-    }
-
-    /// TODO: Load camera config files.
-
-    // Attach callback function.
-    ret = IMV_AttachGrabbing(dev_handle, OnFrameGrabbed, (void*)dev_handle);
-    if (ret != IMV_OK) {
-      std::cerr << "ERROR: Attach grabbing failed! Error code " << ret
-                << std::endl;
-      return false;
-    }
-
-    ret = IMV_StartGrabbing(dev_handle);
-    if (ret != IMV_OK) {
-      std::cerr << "ERROR: Start grabbing failed! Error code " << ret
-                << std::endl;
-      return false;
-    }
-  }
-  return true;
-}
-
 int FrameGrabber::SetSoftTriggerConf(IMV_HANDLE dev_handle) {
   int ret = IMV_OK;
 
@@ -431,12 +397,53 @@ int FrameGrabber::MallocConvertBuffer(IMV_HANDLE dev_handle) {
     return ret;
   }
 
-  convert_buffer_ = new unsigned char[(int)width * (int)height * 3];
-  if (convert_buffer_ == nullptr) {
+  g_convert_buffer = new unsigned char[(int)width * (int)height * 3];
+  if (g_convert_buffer == nullptr) {
     std::cerr << "ERROR: Allocation memory to convert buffer failed!"
               << std::endl;
     return IMV_NO_MEMORY;
   }
 
   return IMV_OK;
+}
+
+bool FrameGrabber::InitCameras() {
+  // Open cameras.
+  for (size_t camera_idx = 0; camera_idx < device_handles_.size();
+       camera_idx++) {
+    int ret = IMV_OK;
+
+    IMV_HANDLE dev_handle = device_handles_[camera_idx];
+
+    ret = IMV_Open(dev_handle);
+    if (ret != IMV_OK) {
+      std::cerr << "ERROR: Open camera " << camera_idx << " failed! Error code "
+                << ret << std::endl;
+      return false;
+    }
+
+    // Set software trigger config.
+    ret = SetSoftTriggerConf(dev_handle);
+    if (ret != IMV_OK) {
+      return false;
+    }
+
+    /// TODO: Load camera config files.
+
+    // Attach callback function.
+    ret = IMV_AttachGrabbing(dev_handle, OnFrameGrabbed, (void*)dev_handle);
+    if (ret != IMV_OK) {
+      std::cerr << "ERROR: Attach grabbing failed! Error code " << ret
+                << std::endl;
+      return false;
+    }
+
+    ret = IMV_StartGrabbing(dev_handle);
+    if (ret != IMV_OK) {
+      std::cerr << "ERROR: Start grabbing failed! Error code " << ret
+                << std::endl;
+      return false;
+    }
+  }
+  return true;
 }

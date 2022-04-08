@@ -25,6 +25,9 @@ class FrameGrabber {
   // Init frame grabber.
   bool Init();
 
+  // Grab next frame.
+  void Next();
+
   // Close frame grabber.
   bool Close();
 
@@ -34,26 +37,20 @@ class FrameGrabber {
   // Display device info in the console.
   void PrintDeviceInfo(const IMV_DeviceList& devce_info_list);
 
+  int SetSoftTriggerConf(IMV_HANDLE dev_handle);
+
+  int MallocConvertBuffer(IMV_HANDLE dev_handle);
+
   // Initialize the cameras and start grabbing,
   // but the camera won't grab a frame until it
   // revices a trigger signal.
   bool InitCameras();
-
-  void ExecuteTrigger();
-
-  int SetSoftTriggerConf(IMV_HANDLE dev_handle);
-
-  int MallocConvertBuffer(IMV_HANDLE dev_handle);
 
   const FrameGrabberOptions* options_;
 
   // Device handles.
   std::vector<IMV_HANDLE> device_handles_;
 
-  // Buffers for converting frames.
-  unsigned char* convert_buffer_ = nullptr;
-
-  std::mutex convert_buffer_mutex_;
 };
 
 #endif  // STEREO_ARM_TRACK_FRAME_GRABBER_H_
