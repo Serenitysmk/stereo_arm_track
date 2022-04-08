@@ -1,5 +1,6 @@
 #include "frame_grabber.h"
 
+#include <mutex>
 #include <thread>
 #include <unordered_map>
 
@@ -10,9 +11,11 @@
 using namespace colmap;
 
 namespace {
+
 bool g_is_exit_thread = false;
 unsigned char* g_convert_buffer = nullptr;
 std::unordered_map<IMV_HANDLE, cv::Mat> g_grabbed_frames;
+std::mutex g_grab_frame_mutex;
 
 }  // namespace
 
@@ -45,30 +48,35 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
     pixel_convert_params.nPaddingY = p_frame->frameInfo.paddingY;
     pixel_convert_params.eBayerDemosaic = demosaicNearestNeighbor;
     pixel_convert_params.eDstPixelFormat = gvspPixelBGR8;
-    pixel_convert_params.pDstBuf = g_convert_buffer;
-    pixel_convert_params.nDstBufSize =
-        p_frame->frameInfo.width * p_frame->frameInfo.height * 3;
+    {
+      std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
+      pixel_convert_params.pDstBuf = g_convert_buffer;
+      pixel_convert_params.nDstBufSize =
+          p_frame->frameInfo.width * p_frame->frameInfo.height * 3;
 
-    ret = IMV_PixelConvert(dev_handle, &pixel_convert_params);
-    if (ret != IMV_OK) {
-      std::cerr << "ERROR: Image convert to BGR failed! Error code " << ret
-                << std::endl;
+      ret = IMV_PixelConvert(dev_handle, &pixel_convert_params);
+      if (ret != IMV_OK) {
+        std::cerr << "ERROR: Image convert to BGR failed! Error code " << ret
+                  << std::endl;
+      }
+      image_data = g_convert_buffer;
+      pixel_format = gvspPixelBGR8;
     }
-    image_data = g_convert_buffer;
-    pixel_format = gvspPixelBGR8;
+
   } else {
     image_data = p_frame->pData;
     pixel_format = p_frame->frameInfo.pixelFormat;
   }
 
-  cv::Size image_size(p_frame->frameInfo.width, p_frame->frameInfo.height);
-  g_grabbed_frames[dev_handle] =
-      cv::Mat(image_size, CV_8UC3, (uchar*)image_data);
+  {
+    std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
+    cv::Size image_size(p_frame->frameInfo.width, p_frame->frameInfo.height);
+    g_grabbed_frames[dev_handle] =
+        cv::Mat(image_size, CV_8UC3, (uchar*)image_data);
 
-  std::cout << "Width: " << g_grabbed_frames[dev_handle].cols
-            << ", height: " << g_grabbed_frames[dev_handle].rows << std::endl;
-  cv::imshow("img", g_grabbed_frames[dev_handle]);
-  cv::waitKey(1);
+    std::cout << "Width: " << g_grabbed_frames[dev_handle].cols
+              << ", height: " << g_grabbed_frames[dev_handle].rows << std::endl;
+  }
   return;
 }
 
