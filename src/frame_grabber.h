@@ -27,7 +27,7 @@ class FrameGrabber {
   // Init frame grabber.
   bool Init();
 
-  // Grab next frame.
+  // Grab next frames (Multiple cameras).
   std::vector<cv::Mat> Next();
 
   // Close frame grabber.

@@ -3,6 +3,8 @@
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
+#include <opencv2/highgui.hpp>
+
 #include "src/frame_grabber.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -38,6 +40,21 @@ void RunTestFrameGrabber(const FrameGrabberOptions& grabber_options) {
   }
 
   std::vector<cv::Mat> frames = frame_grabber.Next();
+
+  bool grab_success = true;
+  for(const cv::Mat& frame: frames){
+    if(frame.empty()) grab_success = false;
+  }
+
+  if(grab_success){
+    std::cout << "Grab success!" << std::endl;
+    for(size_t i = 0;i < frames.size(); i++){
+      cv::imshow("Frame_" + std::to_string(i), frames[i]);
+    }
+    cv::waitKey(0);
+  }else{
+    std::cerr << "ERROR: Grab frames failed!" << std::endl;
+  }
 
   frame_grabber.Close();
 }
