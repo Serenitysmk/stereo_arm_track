@@ -3,6 +3,7 @@
 
 #include <mutex>
 #include <vector>
+#include <queue>
 
 #include <opencv2/core.hpp>
 
@@ -48,6 +49,8 @@ class FrameGrabber {
 
   int MallocConvertBuffer(IMV_HANDLE dev_handle);
 
+  void ExecuteTriggerSoft();
+
   // Initialize the cameras and start grabbing,
   // but the camera won't grab a frame until it
   // revices a trigger signal.
@@ -57,6 +60,10 @@ class FrameGrabber {
 
   // Device handles.
   std::vector<IMV_HANDLE> device_handles_;
+
+  // Grabbed frames queue.
+  std::queue<std::vector<IMV_Frame*>> frames_queue_;
+  std::mutex frames_queue_mutex_;
 };
 
 #endif  // STEREO_ARM_TRACK_FRAME_GRABBER_H_

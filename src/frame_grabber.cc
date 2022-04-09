@@ -1,6 +1,5 @@
 #include "frame_grabber.h"
 
-#include <mutex>
 #include <thread>
 #include <unordered_map>
 
@@ -14,7 +13,7 @@ namespace {
 
 bool g_is_exit_thread = false;
 unsigned char* g_convert_buffer = nullptr;
-std::unordered_map<IMV_HANDLE, cv::Mat> g_grabbed_frames;
+std::unordered_map<IMV_HANDLE, IMV_Frame*> g_grabbed_frames;
 std::mutex g_grab_frame_mutex;
 
 // Data frame callback function.
@@ -69,11 +68,7 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
   {
     std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
     cv::Size image_size(p_frame->frameInfo.width, p_frame->frameInfo.height);
-    g_grabbed_frames[dev_handle] =
-        cv::Mat(image_size, CV_8UC3, (uchar*)image_data);
-
-    std::cout << "Width: " << g_grabbed_frames[dev_handle].cols
-              << ", height: " << g_grabbed_frames[dev_handle].rows << std::endl;
+    g_grabbed_frames[dev_handle] = p_frame;
   }
   return;
 }
@@ -166,18 +161,15 @@ std::vector<cv::Mat> FrameGrabber::Next() {
   grabbed_frames.reserve(device_handles_.size());
 
   // Execute all triggers.
-  for (IMV_HANDLE dev_handle : device_handles_) {
-    ret = IMV_ExecuteCommandFeature(dev_handle, "TriggerSoftware");
-    if (ret != IMV_OK) {
-      std::cerr << "WARNING: Execute TriggerSoftware failed! Error code " << ret
-                << std::endl;
-    }
-  }
+  ExecuteTriggerSoft();
 
   for (IMV_HANDLE dev_handle : device_handles_) {
     {
       std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
-      grabbed_frames.push_back(g_grabbed_frames[dev_handle]);
+      cv::Size size(g_grabbed_frames[dev_handle]->frameInfo.width,
+                    g_grabbed_frames[dev_handle]->frameInfo.height);
+      grabbed_frames.emplace_back(size, CV_8UC3,
+                                  (uchar*)g_grabbed_frames[dev_handle]->pData);
     }
   }
   return grabbed_frames;
@@ -204,7 +196,23 @@ void FrameGrabber::Record(const std::string& output_dir,
   auto end = std::chrono::high_resolution_clock::now() + time;
 
   while (std::chrono::high_resolution_clock::now() < end) {
-    std::cout << "Do something..." << std::endl;
+    ExecuteTriggerSoft();
+
+    std::vector<IMV_Frame*> frames;
+    frames.reserve(device_handles_.size());
+    // Push to the frames queue.
+    for (IMV_HANDLE dev_handle : device_handles_) {
+      {
+        std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
+        frames.emplace_back(g_grabbed_frames[dev_handle]);
+      }
+    }
+    {
+      std::unique_lock<std::mutex> lock(frames_queue_mutex_);
+      frames_queue_.push(frames);
+    }
+
+    std::cout << "Frames grabbed and pushed to the queue" << std::endl;
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
   end = std::chrono::high_resolution_clock::now();
@@ -468,6 +476,17 @@ int FrameGrabber::MallocConvertBuffer(IMV_HANDLE dev_handle) {
   }
 
   return IMV_OK;
+}
+
+void FrameGrabber::ExecuteTriggerSoft() {
+  int ret = IMV_OK;
+  for (IMV_HANDLE dev_handle : device_handles_) {
+    ret = IMV_ExecuteCommandFeature(dev_handle, "TriggerSoftware");
+    if (ret != IMV_OK) {
+      std::cerr << "WARNING: Execute TriggerSoftware failed! Error code " << ret
+                << std::endl;
+    }
+  }
 }
 
 bool FrameGrabber::InitCameras() {
