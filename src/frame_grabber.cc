@@ -137,8 +137,6 @@ bool FrameGrabber::Init() {
     }
   }
 
-  MallocConvertBuffer(device_handles_[0]);
-
   // Print device info list.
   PrintDeviceInfo(device_info_list);
 
@@ -148,6 +146,12 @@ bool FrameGrabber::Init() {
   // but the camera won't grab a frame until it
   // revices a trigger signal.
   if (!InitCameras()) {
+    return false;
+  }
+
+  // Prepare convert buffer.
+  ret = MallocConvertBuffer(device_handles_[0]);
+  if(ret != IMV_OK){
     return false;
   }
 
@@ -475,6 +479,7 @@ int FrameGrabber::MallocConvertBuffer(IMV_HANDLE dev_handle) {
     return IMV_NO_MEMORY;
   }
 
+  std::cout << "I am here" << std::endl;
   return IMV_OK;
 }
 
