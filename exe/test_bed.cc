@@ -23,11 +23,12 @@ int main(int argc, char** argv) {
   grabber_options.num_cameras = FLAGS_num_cameras;
   grabber_options.frame_rate = FLAGS_frame_rate;
 
-  RunTestFrameGrabber(grabber_options);
+  //RunTestFrameGrabber(grabber_options);
 
-  // FrameGrabber grabber(&grabber_options);
+  FrameGrabber grabber(&grabber_options);
   
-  // grabber.Record("./", std::chrono::minutes(1), 10.0, true);
+  grabber.Init();
+  grabber.TestGrabFrameOneCamera();
   return EXIT_SUCCESS;
 }
 

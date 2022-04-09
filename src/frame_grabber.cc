@@ -67,7 +67,6 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
 
   {
     std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
-    cv::Size image_size(p_frame->frameInfo.width, p_frame->frameInfo.height);
     g_grabbed_frames[dev_handle] = p_frame;
   }
   return;
@@ -264,14 +263,15 @@ bool FrameGrabber::TestGrabFrameOneCamera() {
   // Open Camera.
   int ret = IMV_OK;
 
-  IMV_HANDLE dev_handle = device_handles_[2];
-
+  IMV_HANDLE dev_handle = device_handles_[0];
+  std::cout << "hi I am here" << std::endl;
   ret = IMV_Open(dev_handle);
   if (ret != IMV_OK) {
     std::cerr << "Open camera failed! Error code " << ret << std::endl;
     return false;
   }
 
+  std::cout << "hi I am here" << std::endl;
   // Set software trigger config.
   ret = SetSoftTriggerConf(dev_handle);
   if (ret != IMV_OK) {
@@ -479,7 +479,6 @@ int FrameGrabber::MallocConvertBuffer(IMV_HANDLE dev_handle) {
     return IMV_NO_MEMORY;
   }
 
-  std::cout << "I am here" << std::endl;
   return IMV_OK;
 }
 
@@ -496,6 +495,7 @@ void FrameGrabber::ExecuteTriggerSoft() {
 
 bool FrameGrabber::InitCameras() {
   // Open cameras.
+  std::cout << "Init cameras" << std::endl;
   for (size_t camera_idx = 0; camera_idx < device_handles_.size();
        camera_idx++) {
     int ret = IMV_OK;
@@ -508,6 +508,7 @@ bool FrameGrabber::InitCameras() {
                 << ret << std::endl;
       return false;
     }
+    std::cout << "Camera " << camera_idx << " opened" << std::endl;
 
     // Set software trigger config.
     ret = SetSoftTriggerConf(dev_handle);
@@ -515,6 +516,7 @@ bool FrameGrabber::InitCameras() {
       return false;
     }
 
+    std::cout << "I am here" << std::endl;
     /// TODO: Load camera config files.
 
     // Attach callback function.
@@ -525,6 +527,7 @@ bool FrameGrabber::InitCameras() {
       return false;
     }
 
+    std::cout << "I am here" << std::endl;
     ret = IMV_StartGrabbing(dev_handle);
     if (ret != IMV_OK) {
       std::cerr << "ERROR: Start grabbing failed! Error code " << ret
