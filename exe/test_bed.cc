@@ -50,8 +50,8 @@ void RunTestFrameGrabber() {
 
   if (grab_success) {
     std::cout << "Grab success!" << std::endl;
-    for (size_t i = 0; i < frames.size(); i++) {
-      cv::imshow("Frame_" + std::to_string(i), frames[i]);
+    for (const auto& frame: frames) {
+      cv::imshow("Frame_" + std::to_string(frame.first), frame.second);
     }
     cv::waitKey(0);
   } else {
