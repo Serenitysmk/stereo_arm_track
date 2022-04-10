@@ -39,7 +39,7 @@ class FrameGrabber {
 
   int SetSoftTriggerConf(IMV_HANDLE dev_handle);
 
-  int MallocConvertBuffer(IMV_HANDLE dev_handle);
+  int MallocConvertBuffer();
 
   void ExecuteTriggerSoft();
 
