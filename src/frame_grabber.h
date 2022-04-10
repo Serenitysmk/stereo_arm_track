@@ -9,19 +9,9 @@
 
 #include <IMVApi.h>
 
-struct FrameGrabberOptions {
-  // Number of cameras.
-  int num_cameras = 4;
-
-  // Frame rate.
-  double frame_rate = 25.0;
-
-  bool Check() const;
-};
-
 class FrameGrabber {
  public:
-  FrameGrabber(const FrameGrabberOptions* options);
+  FrameGrabber(const size_t num_cameras, const std::vector<int>& camera_list);
 
   ~FrameGrabber();
 
@@ -56,7 +46,8 @@ class FrameGrabber {
   // revices a trigger signal.
   bool InitCameras();
 
-  const FrameGrabberOptions* options_;
+  size_t num_cameras_;
+  const std::vector<int> camera_list_;
 
   // Device handles.
   std::vector<IMV_HANDLE> device_handles_;

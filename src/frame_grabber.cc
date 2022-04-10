@@ -88,14 +88,9 @@ void ExecuteSoftTrigger(IMV_HANDLE dev_handle) {
 
 }  // namespace
 
-bool FrameGrabberOptions::Check() const {
-  CHECK_OPTION_GE(num_cameras, 1);
-  CHECK_OPTION_GE(frame_rate, 1.0);
-  return true;
-}
-
-FrameGrabber::FrameGrabber(const FrameGrabberOptions* options)
-    : options_(options) {}
+FrameGrabber::FrameGrabber(const size_t num_cameras,
+                           const std::vector<int>& camera_list)
+    : num_cameras_(num_cameras), camera_list_(camera_list) {}
 
 FrameGrabber::~FrameGrabber() {
   for (IMV_HANDLE dev_handle : device_handles_) {
@@ -120,9 +115,9 @@ bool FrameGrabber::Init() {
   if (device_info_list.nDevNum < 1) {
     std::cerr << "ERROR: No camera found." << std::endl;
     return false;
-  } else if (device_info_list.nDevNum != options_->num_cameras) {
+  } else if (device_info_list.nDevNum != num_cameras_) {
     std::cerr << "ERROR: Found " << device_info_list.nDevNum << " cameras, but "
-              << options_->num_cameras << " is expected." << std::endl;
+              << num_cameras_ << " is expected." << std::endl;
     return false;
   }
 
@@ -140,6 +135,11 @@ bool FrameGrabber::Init() {
   PrintDeviceInfo(device_info_list);
 
   std::cout << "Prepare cameras to grab frames." << std::endl;
+  std::cout << "Use camera index: ";
+  for (const int& idx : camera_list_) {
+    std::cout << idx << " ";
+  }
+  std::cout << std::endl;
 
   // Initialize the cameras and start grabbing,
   // but the camera won't grab a frame until it
@@ -150,7 +150,7 @@ bool FrameGrabber::Init() {
 
   // Prepare convert buffer.
   ret = MallocConvertBuffer(device_handles_[0]);
-  if(ret != IMV_OK){
+  if (ret != IMV_OK) {
     return false;
   }
 
@@ -228,8 +228,7 @@ void FrameGrabber::Record(const std::string& output_dir,
 
 bool FrameGrabber::Close() {
   int ret = IMV_OK;
-  for (size_t camera_idx = 0; camera_idx < device_handles_.size();
-       camera_idx++) {
+  for (const int& camera_idx : camera_list_) {
     IMV_HANDLE dev_handle = device_handles_[camera_idx];
     if (dev_handle == nullptr) {
       continue;
@@ -275,9 +274,9 @@ bool FrameGrabber::TestGrabFrameOneCamera() {
   if (device_info_list.nDevNum < 1) {
     std::cerr << "ERROR: No camera found." << std::endl;
     return false;
-  } else if (device_info_list.nDevNum != options_->num_cameras) {
+  } else if (device_info_list.nDevNum != num_cameras_) {
     std::cerr << "ERROR: Found " << device_info_list.nDevNum << " cameras, but "
-              << options_->num_cameras << " is expected." << std::endl;
+              << num_cameras_ << " is expected." << std::endl;
     return false;
   }
 
@@ -527,8 +526,7 @@ void FrameGrabber::ExecuteTriggerSoft() {
 bool FrameGrabber::InitCameras() {
   // Open cameras.
   std::cout << "Init cameras" << std::endl;
-  for (size_t camera_idx = 0; camera_idx < device_handles_.size();
-       camera_idx++) {
+  for (const int& camera_idx : camera_list_) {
     int ret = IMV_OK;
 
     IMV_HANDLE dev_handle = device_handles_[camera_idx];
