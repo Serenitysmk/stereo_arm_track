@@ -3,6 +3,7 @@
 
 #include <mutex>
 #include <vector>
+#include <unordered_map>
 #include <queue>
 
 #include <opencv2/core.hpp>
@@ -15,11 +16,13 @@ class FrameGrabber {
 
   ~FrameGrabber();
 
+  const std::vector<int>& CameraList()const;
+
   // Init frame grabber.
   bool Init();
 
   // Grab next frames (Multiple cameras).
-  std::vector<cv::Mat> Next();
+  std::unordered_map<int, cv::Mat> Next();
 
   // Record videos for a period of time.
   void Record(const std::string& output_dir,

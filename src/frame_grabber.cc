@@ -101,6 +101,10 @@ FrameGrabber::~FrameGrabber() {
   device_handles_.clear();
 }
 
+const std::vector<int>& FrameGrabber::CameraList() const {
+  return camera_list_;
+}
+
 bool FrameGrabber::Init() {
   // Find camera devices and return if no devices are found
   // or the number of devices is different from the setting.
@@ -160,21 +164,22 @@ bool FrameGrabber::Init() {
   return true;
 }
 
-std::vector<cv::Mat> FrameGrabber::Next() {
+std::unordered_map<int, cv::Mat> FrameGrabber::Next() {
   int ret = IMV_OK;
-  std::vector<cv::Mat> grabbed_frames;
-  grabbed_frames.reserve(device_handles_.size());
+  std::unordered_map<int, cv::Mat> grabbed_frames;
 
   // Execute all triggers.
   ExecuteTriggerSoft();
 
-  for (IMV_HANDLE dev_handle : device_handles_) {
+  for (const int& camera_idx : camera_list_) {
+    IMV_HANDLE dev_handle = device_handles_[camera_idx];
     {
       std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
       cv::Size size(g_grabbed_frames[dev_handle]->frameInfo.width,
                     g_grabbed_frames[dev_handle]->frameInfo.height);
-      grabbed_frames.emplace_back(size, CV_8UC3,
-                                  (uchar*)g_grabbed_frames[dev_handle]->pData);
+      grabbed_frames.insert(std::make_pair(
+          camera_idx,
+          cv::Mat(size, CV_8UC3, (uchar*)g_grabbed_frames[dev_handle]->pData)));
     }
   }
   return grabbed_frames;
@@ -296,14 +301,13 @@ bool FrameGrabber::TestGrabFrameOneCamera() {
   PrintDeviceInfo(device_info_list);
 
   IMV_HANDLE dev_handle = device_handles_[2];
-  std::cout << "hi I am here" << std::endl;
+
   ret = IMV_Open(dev_handle);
   if (ret != IMV_OK) {
     std::cerr << "Open camera failed! Error code " << ret << std::endl;
     return false;
   }
 
-  std::cout << "hi I am here" << std::endl;
   // Set software trigger config.
   ret = SetSoftTriggerConf(dev_handle);
   if (ret != IMV_OK) {
@@ -516,7 +520,8 @@ int FrameGrabber::MallocConvertBuffer(IMV_HANDLE dev_handle) {
 
 void FrameGrabber::ExecuteTriggerSoft() {
   int ret = IMV_OK;
-  for (IMV_HANDLE dev_handle : device_handles_) {
+  for (const int& camera_idx : camera_list_) {
+    IMV_HANDLE dev_handle = device_handles_[camera_idx];
     ret = IMV_ExecuteCommandFeature(dev_handle, "TriggerSoftware");
     if (ret != IMV_OK) {
       std::cerr << "WARNING: Execute TriggerSoftware failed! Error code " << ret
@@ -547,7 +552,6 @@ bool FrameGrabber::InitCameras() {
       return false;
     }
 
-    std::cout << "I am here" << std::endl;
     /// TODO: Load camera config files.
 
     // Attach callback function.
@@ -558,7 +562,6 @@ bool FrameGrabber::InitCameras() {
       return false;
     }
 
-    std::cout << "I am here" << std::endl;
     ret = IMV_StartGrabbing(dev_handle);
     if (ret != IMV_OK) {
       std::cerr << "ERROR: Start grabbing failed! Error code " << ret
