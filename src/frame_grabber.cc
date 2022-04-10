@@ -294,7 +294,7 @@ bool FrameGrabber::TestGrabFrameOneCamera() {
   // Print device info list.
   PrintDeviceInfo(device_info_list);
 
-  IMV_HANDLE dev_handle = device_handles_[1];
+  IMV_HANDLE dev_handle = device_handles_[2];
   std::cout << "hi I am here" << std::endl;
   ret = IMV_Open(dev_handle);
   if (ret != IMV_OK) {
