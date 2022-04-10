@@ -16,7 +16,10 @@ using namespace colmap;
 ////////////////////////////////////////////////////////////////////////////////
 DEFINE_int32(num_cameras, 4, "Number of cameras.");
 DEFINE_string(camera_list, "2", "Used camera index");
-
+7L03E0EPAK00002
+7L03E0EPAK00005
+7L03E0EPAK00022
+7L03E0EPAK00026
 void RunTestFrameGrabber();
 
 int main(int argc, char** argv) {
