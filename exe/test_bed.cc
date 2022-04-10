@@ -50,10 +50,10 @@ void RunTestFrameGrabber() {
 
   if (grab_success) {
     std::cout << "Grab success!" << std::endl;
-    for (const auto& frame: frames) {
-      cv::imshow("Frame_" + std::to_string(frame.first), frame.second);
-    }
-    cv::waitKey(0);
+    // for (const auto& frame: frames) {
+    //   cv::imshow("Frame_" + std::to_string(frame.first), frame.second);
+    // }
+    //cv::waitKey(0);
   } else {
     std::cerr << "ERROR: Grab frames failed!" << std::endl;
   }

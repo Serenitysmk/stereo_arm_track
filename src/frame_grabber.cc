@@ -25,9 +25,6 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
 
   IMV_HANDLE dev_handle = (IMV_HANDLE)p_user;
 
-  std::cout << "Get frame blockId = " << p_frame->frameInfo.blockId
-            << std::endl;
-
   int ret = IMV_OK;
   IMV_PixelConvertParam pixel_convert_params;
   unsigned char* image_data = nullptr;
@@ -69,6 +66,9 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
     std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
     g_grabbed_frames[dev_handle] = p_frame;
   }
+
+  std::cout << "Get frame blockId = " << p_frame->frameInfo.blockId
+            << std::endl;
   return;
 }
 
@@ -171,17 +171,20 @@ std::unordered_map<int, cv::Mat> FrameGrabber::Next() {
   // Execute all triggers.
   ExecuteTriggerSoft();
 
-  for (const int& camera_idx : camera_list_) {
-    IMV_HANDLE dev_handle = device_handles_[camera_idx];
-    {
-      std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
-      cv::Size size(g_grabbed_frames[dev_handle]->frameInfo.width,
-                    g_grabbed_frames[dev_handle]->frameInfo.height);
-      grabbed_frames.insert(std::make_pair(
-          camera_idx,
-          cv::Mat(size, CV_8UC3, (uchar*)g_grabbed_frames[dev_handle]->pData)));
-    }
-  }
+  std::this_thread::sleep_for(std::chrono::seconds(5));
+  //std::cout << "num grabbed frames: " << g_grabbed_frames.size() << std::endl;
+  // for (const int& camera_idx : camera_list_) {
+  //   IMV_HANDLE dev_handle = device_handles_[camera_idx];
+  //   {
+  //     std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
+  //     cv::Size size(g_grabbed_frames[dev_handle]->frameInfo.width,
+  //                   g_grabbed_frames[dev_handle]->frameInfo.height);
+  //     grabbed_frames.insert(std::make_pair(
+  //         camera_idx,
+  //         cv::Mat(size, CV_8UC3, (uchar*)g_grabbed_frames[dev_handle]->pData)));
+  //   }
+  // }
+  
   return grabbed_frames;
 }
 
