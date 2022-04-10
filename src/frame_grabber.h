@@ -2,9 +2,9 @@
 #define SRC_FRAME_GRABBER_H_
 
 #include <mutex>
-#include <vector>
-#include <unordered_map>
 #include <queue>
+#include <unordered_map>
+#include <vector>
 
 #include <opencv2/core.hpp>
 
@@ -16,7 +16,7 @@ class FrameGrabber {
 
   ~FrameGrabber();
 
-  const std::vector<int>& CameraList()const;
+  const std::vector<int>& CameraList() const;
 
   // Init frame grabber.
   bool Init();
@@ -25,8 +25,7 @@ class FrameGrabber {
   std::unordered_map<int, cv::Mat> Next();
 
   // Record videos for a period of time.
-  void Record(const std::string& output_dir,
-              const std::chrono::minutes& time,
+  void Record(const std::string& output_dir, const std::chrono::minutes& time,
               const double frame_rate, const bool display);
 
   // Close frame grabber.
