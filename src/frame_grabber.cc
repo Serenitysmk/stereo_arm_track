@@ -67,8 +67,8 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
       }
       image_data = g_convert_buffer;
       pixel_format = gvspPixelBGR8;
+      std::cout << "Pixel format converted" << std::endl;
     }
-
   } else {
     image_data = p_frame->pData;
     pixel_format = p_frame->frameInfo.pixelFormat;
