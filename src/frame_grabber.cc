@@ -34,7 +34,7 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
 
   {
     std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
-    g_grabbed_frames.at(dev_handle) = p_frame;
+    g_grabbed_frames.insert(std::make_pair(dev_handle, p_frame));
     g_grab_finish_condition.notify_one();
   }
 
@@ -148,6 +148,7 @@ std::unordered_map<std::string, cv::Mat> FrameGrabber::Next() {
       return g_grabbed_frames.size() == camera_list_.size();
     });
   }
+  std::cout <<"Execute finished" << std::endl;
 
   for (const std::string& serial_number : camera_list_) {
     IMV_HANDLE dev_handle = device_handles_.at(serial_number);
@@ -513,7 +514,7 @@ void FrameGrabber::PixelFormatConversion(IMV_HANDLE dev_handle,
                                          IMV_Frame* frame) {
   int ret = IMV_OK;
   IMV_PixelConvertParam pixel_convert_params;
-
+  std::cout << "Start pixel format conversion" << std::endl;
   // mono8 and BGR8 raw data does not to be converted.
   if ((frame->frameInfo.pixelFormat != gvspPixelMono8) &&
       (frame->frameInfo.pixelFormat != gvspPixelBGR8)) {
@@ -546,7 +547,6 @@ void FrameGrabber::ExecuteTriggerSoft() {
   int ret = IMV_OK;
   for (const std::string& serial_number : camera_list_) {
     IMV_HANDLE dev_handle = device_handles_.at(serial_number);
-    std::cout << "DEVICE_HANDLE: " << dev_handle << std::endl;
     ret = IMV_ExecuteCommandFeature(dev_handle, "TriggerSoftware");
     if (ret != IMV_OK) {
       std::cerr << "WARNING: Execute TriggerSoftware failed! Error code " << ret

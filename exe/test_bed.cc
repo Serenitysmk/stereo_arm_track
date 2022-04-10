@@ -20,6 +20,10 @@ DEFINE_string(
     "7L03E0EPAK00002, 7L03E0EPAK00005, 7L03E0EPAK00022, 7L03E0EPAK00026",
     "Used camera serial numbers");
 
+// DEFINE_string(
+//     camera_list,
+//     "7L03E0EPAK00002",
+//     "Used camera serial numbers");
 void RunTestFrameGrabber();
 
 int main(int argc, char** argv) {
@@ -56,8 +60,8 @@ void RunTestFrameGrabber() {
     std::cout << "Grab success!" << std::endl;
     for (const auto& frame : frames) {
       std::stringstream stream;
-      stream << "Frame_" << frame.first << ".png";
-      cv::imshow(stream.str(), frame.second);
+      stream << "../data/Frame_" << frame.first << ".png";
+      cv::imwrite(stream.str(), frame.second);
     }
     cv::waitKey(0);
 
