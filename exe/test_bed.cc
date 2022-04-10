@@ -57,8 +57,9 @@ void RunTestFrameGrabber() {
     for (const auto& frame : frames) {
       std::stringstream stream;
       stream << "Frame_" << frame.first << ".png";
-      cv::imwrite(stream.str(), frame.second);
+      cv::imshow(stream.str(), frame.second);
     }
+    cv::waitKey(0);
 
   } else {
     std::cerr << "ERROR: Grab frames failed!" << std::endl;
