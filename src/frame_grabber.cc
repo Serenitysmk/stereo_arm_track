@@ -148,7 +148,7 @@ std::unordered_map<std::string, cv::Mat> FrameGrabber::Next() {
       return g_grabbed_frames.size() == camera_list_.size();
     });
   }
-  std::cout <<"Execute finished" << std::endl;
+  std::cout << "Execute finished" << std::endl;
 
   for (const std::string& serial_number : camera_list_) {
     IMV_HANDLE dev_handle = device_handles_.at(serial_number);
@@ -470,41 +470,43 @@ int FrameGrabber::MallocConvertBuffer() {
   uint64_t pixel_format_val = 0;
   int64_t width = 0;
   int64_t height = 0;
+  for (const std::string& serial_number : camera_list_) {
+    IMV_HANDLE dev_handle = device_handles_.at(serial_number);
+    ret = IMV_GetEnumFeatureValue(dev_handle, "PixelFormat", &pixel_format_val);
 
-  IMV_HANDLE dev_handle = device_handles_.at(*camera_list_.begin());
-  ret = IMV_GetEnumFeatureValue(dev_handle, "PixelFormat", &pixel_format_val);
+    if (ret != IMV_OK) {
+      std::cerr << "ERROR: Get PixelFormat feature value failed! Error code "
+                << ret << std::endl;
+      return ret;
+    }
 
-  if (ret != IMV_OK) {
-    std::cerr << "ERROR: Get PixelFormat feature value failed! Error code "
-              << ret << std::endl;
-    return ret;
-  }
+    if (pixel_format_val == (uint64_t)gvspPixelMono8 ||
+        pixel_format_val == (uint64_t)gvspPixelBGR8) {
+      return IMV_OK;
+    }
 
-  if (pixel_format_val == (uint64_t)gvspPixelMono8 ||
-      pixel_format_val == (uint64_t)gvspPixelBGR8) {
-    return IMV_OK;
-  }
+    ret = IMV_GetIntFeatureValue(dev_handle, "Width", &width);
+    if (ret != IMV_OK) {
+      std::cerr << "ERROR: Get Width feature value failed! Error code " << ret
+                << std::endl;
+      return ret;
+    }
 
-  ret = IMV_GetIntFeatureValue(dev_handle, "Width", &width);
-  if (ret != IMV_OK) {
-    std::cerr << "ERROR: Get Width feature value failed! Error code " << ret
-              << std::endl;
-    return ret;
-  }
+    ret = IMV_GetIntFeatureValue(dev_handle, "Height", &height);
+    if (ret != IMV_OK) {
+      std::cerr << "ERROR: Get Height feature value failed! Error code " << ret
+                << std::endl;
+      return ret;
+    }
 
-  ret = IMV_GetIntFeatureValue(dev_handle, "Height", &height);
-  if (ret != IMV_OK) {
-    std::cerr << "ERROR: Get Height feature value failed! Error code " << ret
-              << std::endl;
-    return ret;
-  }
+    convert_buffers.insert(std::make_pair(
+        dev_handle, new unsigned char[(int)width * (int)height * 3]));
 
-  convert_buffer = new unsigned char[(int)width * (int)height * 3];
-
-  if (convert_buffer == nullptr) {
-    std::cerr << "ERROR: Allocation memory to convert buffer failed!"
-              << std::endl;
-    return IMV_NO_MEMORY;
+    if (convert_buffers.at(dev_handle) == nullptr) {
+      std::cerr << "ERROR: Allocation memory to convert buffer failed!"
+                << std::endl;
+      return IMV_NO_MEMORY;
+    }
   }
 
   return IMV_OK;
@@ -528,7 +530,7 @@ void FrameGrabber::PixelFormatConversion(IMV_HANDLE dev_handle,
     pixel_convert_params.eBayerDemosaic = demosaicNearestNeighbor;
     pixel_convert_params.eDstPixelFormat = gvspPixelBGR8;
 
-    pixel_convert_params.pDstBuf = convert_buffer;
+    pixel_convert_params.pDstBuf = convert_buffers.at(dev_handle);
 
     pixel_convert_params.nDstBufSize =
         frame->frameInfo.width * frame->frameInfo.height * 3;
@@ -538,7 +540,7 @@ void FrameGrabber::PixelFormatConversion(IMV_HANDLE dev_handle,
       std::cerr << "ERROR: Image convert to BGR failed! Error code " << ret
                 << std::endl;
     }
-    frame->pData = convert_buffer;
+    frame->pData = convert_buffers.at(dev_handle);
     frame->frameInfo.pixelFormat = gvspPixelBGR8;
   }
 }

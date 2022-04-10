@@ -56,7 +56,7 @@ class FrameGrabber {
   // Device handles.
   std::unordered_map<std::string, IMV_HANDLE> device_handles_;
 
-  unsigned char* convert_buffer = nullptr;
+  std::unordered_map<IMV_HANDLE, unsigned char*> convert_buffers;
 
   // Grabbed frames queue.
   std::queue<std::vector<IMV_Frame*>> frames_queue_;
