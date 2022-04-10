@@ -51,7 +51,7 @@ void RunTestFrameGrabber() {
   std::unordered_map<std::string, cv::Mat> frames = frame_grabber.Next();
 
   bool grab_success = true;
-  std::cout << "Number of frames: " << frames.size() << std::endl;
+  
   for (const auto& frame : frames) {
     if (frame.second.empty()) grab_success = false;
   }
