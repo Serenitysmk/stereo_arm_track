@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<puregevpersistencefile version="2.0">
+    <ExtraInfo>
+        <SDKVersion>V2.3.2.194984</SDKVersion>
+        <SourceOfGeneration>MVViewer</SourceOfGeneration>
+        <TimeOfGeneration>2022-04-10 23:03:42</TimeOfGeneration>
+    </ExtraInfo>
+    <MVViewer>
+        <deviceCtrlVisibility>Guru</deviceCtrlVisibility>
+        <iAnswerTimeout>1000</iAnswerTimeout>
+        <iHeartbeatIval>1500</iHeartbeatIval>
+        <iInterPacketTimeout>0</iInterPacketTimeout>
+        <iSingleResendMaxPackNum>50</iSingleResendMaxPackNum>
+        <iMaximumLostPacketNum>80</iMaximumLostPacketNum>
+        <logGenIcamEnabled>1</logGenIcamEnabled>
+        <logEventsEnabled>0</logEventsEnabled>
+        <logBufferAllEnabled>0</logBufferAllEnabled>
+        <logBufferErrorEnabled>1</logBufferErrorEnabled>
+        <logFileName>/home/zhidao/MVviewer/EventMonitor.txt</logFileName>
+        <streamingBufferCount>8</streamingBufferCount>
+        <snapRecordBufferCount>60</snapRecordBufferCount>
+        <streamingUrbNumberCount>64</streamingUrbNumberCount>
+        <streamingUrbSizeCount>64</streamingUrbSizeCount>
+        <strDisplayValue>30 FPS</strDisplayValue>
+        <imageOneOutOf>10</imageOneOutOf>
+        <imageMaxRate>100</imageMaxRate>
+        <imageAverageThroughPut>1</imageAverageThroughPut>
+        <imageSaveThrottleOption>1</imageSaveThrottleOption>
+        <imageSavePath>/home/zhidao/MVviewer/pictures</imageSavePath>
+        <imageSaveFormat>Device independent bitmap(BMP)</imageSaveFormat>
+        <displayChunkDataEnable>0</displayChunkDataEnable>
+        <autoRefreshEnable>1</autoRefreshEnable>
+        <imageSavePreFix>Pic</imageSavePreFix>
+        <imageSaveFileNameFormat>0</imageSaveFileNameFormat>
+        <imageQualityLevel>3</imageQualityLevel>
+        <imageQuality>100</imageQuality>
+        <imageSaveOnePopDlg>0</imageSaveOnePopDlg>
+        <setPersistentIP>1</setPersistentIP>
+        <isShowCrosshair>0</isShowCrosshair>
+        <RedCrosshair>255</RedCrosshair>
+        <BlueCrosshair>0</BlueCrosshair>
+        <GreenCrosshair>0</GreenCrosshair>
+        <BayerDemosaicing>0</BayerDemosaicing>
+        <AcquisitionFPS>1</AcquisitionFPS>
+        <BandwidthMbps>1</BandwidthMbps>
+        <ReceivedImages>1</ReceivedImages>
+        <LostBlocks>1</LostBlocks>
+        <ErrorImages>1</ErrorImages>
+        <RecordLocation>/home/zhidao/MVviewer/videos</RecordLocation>
+        <RecordPopDlg>0</RecordPopDlg>
+        <AVI>AVI</AVI>
+        <VideoQualityLevel>0</VideoQualityLevel>
+        <VideoQuality>30</VideoQuality>
+        <VideoNameFormat>0</VideoNameFormat>
+        <VideoPrefix>Video</VideoPrefix>
+        <PlaybackSpeed>0</PlaybackSpeed>
+        <CustomFps>20</CustomFps>
+        <RemoteIpAddr>0.0.0.0</RemoteIpAddr>
+        <DrawROI>
+            <Enable>0</Enable>
+            <DisplayROIEnable>0</DisplayROIEnable>
+            <RedROI>255</RedROI>
+            <BlueROI>0</BlueROI>
+            <GreenROI>0</GreenROI>
+            <VideoForm index="0"/>
+            <VideoForm index="1"/>
+            <VideoForm index="2"/>
+            <VideoForm index="3"/>
+            <VideoForm index="4"/>
+            <VideoForm index="5"/>
+            <VideoForm index="6"/>
+            <VideoForm index="7"/>
+            <VideoForm index="8"/>
+            <VideoForm index="9"/>
+            <VideoForm index="10"/>
+            <VideoForm index="11"/>
+            <VideoForm index="12"/>
+            <VideoForm index="13"/>
+            <VideoForm index="14"/>
+            <VideoForm index="15"/>
+        </DrawROI>
+    </MVViewer>
+    <device>
+        <DeviceInfo>
+            <DeviceKey>Huaray Technology:7L03E0EPAK00002</DeviceKey>
+            <DeviceModelName>A7300CU90</DeviceModelName>
+            <DeviceVersion>V1.000.00.0.R(20201013,133916)</DeviceVersion>
+            <guid>2E0317AB7BCC</guid>
+        </DeviceInfo>
+        <Property>
+            <DeviceScanType>0</DeviceScanType>
+            <DeviceLinkThroughputLimitMode>1</DeviceLinkThroughputLimitMode>
+            <DeviceLinkThroughputLimit>400000000</DeviceLinkThroughputLimit>
+            <selectingname>
+                <DeviceTemperatureSelector>1</DeviceTemperatureSelector>
+            </selectingname>
+            <selectingname>
+                <DeviceTemperatureSelector>0</DeviceTemperatureSelector>
+            </selectingname>
+            <Width>2048</Width>
+            <Height>1536</Height>
+            <OffsetX>0</OffsetX>
+            <OffsetY>0</OffsetY>
+            <ReverseX>0</ReverseX>
+            <ReverseY>0</ReverseY>
+            <PixelFormat>17301513</PixelFormat>
+            <TestImageSelector>0</TestImageSelector>
+            <AcquisitionMode>0</AcquisitionMode>
+            <AcquisitionFrameCount>1</AcquisitionFrameCount>
+            <AcquisitionFrameRate>25</AcquisitionFrameRate>
+            <AcquisitionFrameRateEnable>0</AcquisitionFrameRateEnable>
+            <selectingname>
+                <AcquisitionStatusSelector>0</AcquisitionStatusSelector>
+            </selectingname>
+            <selectingname>
+                <AcquisitionStatusSelector>1</AcquisitionStatusSelector>
+            </selectingname>
+            <selectingname>
+                <TriggerSelector>0</TriggerSelector>
+                <TriggerMode>0</TriggerMode>
+                <TriggerSource>0</TriggerSource>
+                <TriggerDelay>0</TriggerDelay>
+                <TriggerMultiplier>100</TriggerMultiplier>
+            </selectingname>
+            <selectingname>
+                <TriggerSelector>1</TriggerSelector>
+                <TriggerMode>1</TriggerMode>
+                <TriggerSource>0</TriggerSource>
+                <TriggerDelay>0</TriggerDelay>
+                <TriggerMultiplier>100</TriggerMultiplier>
+            </selectingname>
+            <LightTriggerDelay>0</LightTriggerDelay>
+            <ExposureMode>0</ExposureMode>
+            <ExposureTargetBrightness>50</ExposureTargetBrightness>
+            <ExposureAuto>0</ExposureAuto>
+            <ExposureTime>5000</ExposureTime>
+            <selectingname>
+                <LineSelector>1</LineSelector>
+                <LineInverter>0</LineInverter>
+                <LineDebouncerTimeAbs>20</LineDebouncerTimeAbs>
+            </selectingname>
+            <selectingname>
+                <LineSelector>2</LineSelector>
+                <LineMode>0</LineMode>
+                <LineInverter>0</LineInverter>
+                <LineDebouncerTimeAbs>20</LineDebouncerTimeAbs>
+            </selectingname>
+            <selectingname>
+                <LineSelector>0</LineSelector>
+                <LineInverter>0</LineInverter>
+                <LineSource>0</LineSource>
+            </selectingname>
+            <selectingname>
+                <UserOutputSelector>1</UserOutputSelector>
+                <UserOutputValue>0</UserOutputValue>
+                <UserOutputValueAll>0</UserOutputValueAll>
+            </selectingname>
+            <selectingname>
+                <UserOutputSelector>0</UserOutputSelector>
+                <UserOutputValue>0</UserOutputValue>
+                <UserOutputValueAll>0</UserOutputValueAll>
+            </selectingname>
+            <GainSelector>0</GainSelector>
+            <GainRaw>4</GainRaw>
+            <BlackLevelAuto>0</BlackLevelAuto>
+            <BlackLevelSelector>0</BlackLevelSelector>
+            <BlackLevel>60</BlackLevel>
+            <BalanceWhiteAuto>0</BalanceWhiteAuto>
+            <selectingname>
+                <BalanceRatioSelector>1</BalanceRatioSelector>
+                <BalanceRatio>1</BalanceRatio>
+            </selectingname>
+            <selectingname>
+                <BalanceRatioSelector>2</BalanceRatioSelector>
+                <BalanceRatio>3.46959</BalanceRatio>
+            </selectingname>
+            <selectingname>
+                <BalanceRatioSelector>0</BalanceRatioSelector>
+                <BalanceRatio>1.36343</BalanceRatio>
+            </selectingname>
+            <Gamma>0.45</Gamma>
+            <LUTSelector>0</LUTSelector>
+            <LUTEnable>0</LUTEnable>
+            <LUTIndex>0</LUTIndex>
+            <Fx3DelayTime>0</Fx3DelayTime>
+            <U3VTxSwing>127</U3VTxSwing>
+            <Deemphasis>17</Deemphasis>
+            <UserSetSelector>0</UserSetSelector>
+            <UserSetDefault>0</UserSetDefault>
+            <ChunkModeActive>0</ChunkModeActive>
+            <selectingname>
+                <ChunkSelector>1</ChunkSelector>
+                <ChunkEnable>0</ChunkEnable>
+            </selectingname>
+            <selectingname>
+                <ChunkSelector>2</ChunkSelector>
+                <ChunkEnable>0</ChunkEnable>
+            </selectingname>
+            <selectingname>
+                <ChunkSelector>3</ChunkSelector>
+                <ChunkEnable>0</ChunkEnable>
+            </selectingname>
+            <selectingname>
+                <ChunkSelector>4</ChunkSelector>
+                <ChunkEnable>0</ChunkEnable>
+            </selectingname>
+            <selectingname>
+                <ChunkSelector>0</ChunkSelector>
+                <ChunkEnable>0</ChunkEnable>
+            </selectingname>
+            <selectingname>
+                <CounterSelector>1</CounterSelector>
+                <CounterResetSource>0</CounterResetSource>
+            </selectingname>
+            <selectingname>
+                <CounterSelector>0</CounterSelector>
+                <CounterResetSource>0</CounterResetSource>
+            </selectingname>
+            <TimerSelector>0</TimerSelector>
+            <TimerTriggerSource>0</TimerTriggerSource>
+            <TimerTriggerActivation>0</TimerTriggerActivation>
+            <TimerDelay>1024</TimerDelay>
+            <TimerDuration>4096</TimerDuration>
+            <SharpnessEnabled>1</SharpnessEnabled>
+            <Sharpness>50</Sharpness>
+            <DenoisingEnabled>1</DenoisingEnabled>
+            <Denoising>50</Denoising>
+            <DigitalShift>0</DigitalShift>
+            <Brightness>80</Brightness>
+        </Property>
+        <DrawROI/>
+    </device>
+</puregevpersistencefile>
