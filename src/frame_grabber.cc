@@ -1,5 +1,6 @@
 #include "frame_grabber.h"
 
+#include <condition_variable>
 #include <thread>
 #include <unordered_map>
 
@@ -12,9 +13,20 @@ using namespace colmap;
 namespace {
 
 bool g_is_exit_thread = false;
+
+// Buffer for pixel format conversion.
 unsigned char* g_convert_buffer = nullptr;
+// Mutex to protect pixel format conversion.
+std::mutex g_convert_buffer_mutex;
+
+// Grabbed frames.
 std::unordered_map<IMV_HANDLE, IMV_Frame*> g_grabbed_frames;
+// Mutex to protect the grabbed frames.
 std::mutex g_grab_frame_mutex;
+
+// Condition variable for the main thread to wait
+// for the frames to be grabbed.
+std::condition_variable g_grab_finish_condition;
 
 // Data frame callback function.
 void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
@@ -43,7 +55,7 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
     pixel_convert_params.eBayerDemosaic = demosaicNearestNeighbor;
     pixel_convert_params.eDstPixelFormat = gvspPixelBGR8;
     {
-      std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
+      std::unique_lock<std::mutex> lock(g_convert_buffer_mutex);
       pixel_convert_params.pDstBuf = g_convert_buffer;
       pixel_convert_params.nDstBufSize =
           p_frame->frameInfo.width * p_frame->frameInfo.height * 3;
@@ -65,6 +77,7 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
   {
     std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
     g_grabbed_frames[dev_handle] = p_frame;
+    g_grab_finish_condition.notify_one();
   }
 
   std::cout << "Get frame blockId = " << p_frame->frameInfo.blockId
@@ -171,8 +184,13 @@ std::unordered_map<int, cv::Mat> FrameGrabber::Next() {
   // Execute all triggers.
   ExecuteTriggerSoft();
 
-  std::this_thread::sleep_for(std::chrono::seconds(5));
-  //std::cout << "num grabbed frames: " << g_grabbed_frames.size() << std::endl;
+  {
+    std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
+    g_grab_finish_condition.wait(lock, [this] {
+      return g_grabbed_frames.size() == camera_list_.size();
+    });
+  }
+  std::cout << "num grabbed frames: " << g_grabbed_frames.size() << std::endl;
   // for (const int& camera_idx : camera_list_) {
   //   IMV_HANDLE dev_handle = device_handles_[camera_idx];
   //   {
@@ -181,10 +199,11 @@ std::unordered_map<int, cv::Mat> FrameGrabber::Next() {
   //                   g_grabbed_frames[dev_handle]->frameInfo.height);
   //     grabbed_frames.insert(std::make_pair(
   //         camera_idx,
-  //         cv::Mat(size, CV_8UC3, (uchar*)g_grabbed_frames[dev_handle]->pData)));
+  //         cv::Mat(size, CV_8UC3,
+  //         (uchar*)g_grabbed_frames[dev_handle]->pData)));
   //   }
   // }
-  
+
   return grabbed_frames;
 }
 
