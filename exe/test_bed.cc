@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
 
   FrameGrabber grabber(&grabber_options);
   
-  grabber.Init();
+  //grabber.Init();
   grabber.TestGrabFrameOneCamera();
   return EXIT_SUCCESS;
 }

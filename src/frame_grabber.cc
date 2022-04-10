@@ -263,7 +263,38 @@ bool FrameGrabber::TestGrabFrameOneCamera() {
   // Open Camera.
   int ret = IMV_OK;
 
-  IMV_HANDLE dev_handle = device_handles_[0];
+  IMV_DeviceList device_info_list;
+  ret = IMV_EnumDevices(&device_info_list, interfaceTypeUsb3);
+  if (ret != IMV_OK) {
+    std::cerr << "ERROR: Failed to find camera devices! Error code " << ret
+              << std::endl;
+    return false;
+  }
+
+  // Found devices.
+  if (device_info_list.nDevNum < 1) {
+    std::cerr << "ERROR: No camera found." << std::endl;
+    return false;
+  } else if (device_info_list.nDevNum != options_->num_cameras) {
+    std::cerr << "ERROR: Found " << device_info_list.nDevNum << " cameras, but "
+              << options_->num_cameras << " is expected." << std::endl;
+    return false;
+  }
+
+  device_handles_.resize(device_info_list.nDevNum);
+  for (size_t i = 0; i < device_info_list.nDevNum; i++) {
+    ret = IMV_CreateHandle(&device_handles_[i], modeByIndex, (void*)&i);
+    if (ret != IMV_OK) {
+      std::cerr << "ERROR: Create device handle failed! Error code " << ret
+                << std::endl;
+      return false;
+    }
+  }
+
+  // Print device info list.
+  PrintDeviceInfo(device_info_list);
+
+  IMV_HANDLE dev_handle = device_handles_[1];
   std::cout << "hi I am here" << std::endl;
   ret = IMV_Open(dev_handle);
   if (ret != IMV_OK) {
