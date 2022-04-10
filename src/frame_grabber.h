@@ -41,6 +41,8 @@ class FrameGrabber {
 
   int MallocConvertBuffer();
 
+  void PixelFormatConversion(IMV_HANDLE dev_handle, IMV_Frame* frame);
+
   void ExecuteTriggerSoft();
 
   // Initialize the cameras and start grabbing,
@@ -53,6 +55,8 @@ class FrameGrabber {
 
   // Device handles.
   std::unordered_map<std::string, IMV_HANDLE> device_handles_;
+
+  unsigned char* convert_buffer = nullptr;
 
   // Grabbed frames queue.
   std::queue<std::vector<IMV_Frame*>> frames_queue_;

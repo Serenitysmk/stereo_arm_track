@@ -14,12 +14,6 @@ namespace {
 
 bool g_is_exit_thread = false;
 
-// Buffer for pixel format conversion.
-std::unordered_map<IMV_HANDLE, unsigned char*> g_convert_buffers;
-
-// Mutex to protect pixel format conversion.
-std::mutex g_convert_buffer_mutex;
-
 // Grabbed frames.
 std::unordered_map<IMV_HANDLE, IMV_Frame*> g_grabbed_frames;
 
@@ -38,39 +32,6 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
 
   IMV_HANDLE dev_handle = (IMV_HANDLE)p_user;
 
-  int ret = IMV_OK;
-  IMV_PixelConvertParam pixel_convert_params;
-
-  // mono8 and BGR8 raw data does not to be converted.
-  if ((p_frame->frameInfo.pixelFormat != gvspPixelMono8) &&
-      (p_frame->frameInfo.pixelFormat != gvspPixelBGR8)) {
-    pixel_convert_params.nWidth = p_frame->frameInfo.width;
-    pixel_convert_params.nHeight = p_frame->frameInfo.height;
-    pixel_convert_params.ePixelFormat = p_frame->frameInfo.pixelFormat;
-    pixel_convert_params.pSrcData = p_frame->pData;
-    pixel_convert_params.nSrcDataLen = p_frame->frameInfo.size;
-    pixel_convert_params.nPaddingX = p_frame->frameInfo.paddingX;
-    pixel_convert_params.nPaddingY = p_frame->frameInfo.paddingY;
-    pixel_convert_params.eBayerDemosaic = demosaicNearestNeighbor;
-    pixel_convert_params.eDstPixelFormat = gvspPixelBGR8;
-    
-    {
-      std::unique_lock<std::mutex> lock(g_convert_buffer_mutex);
-      pixel_convert_params.pDstBuf = g_convert_buffers.at(dev_handle);
-      std::cout << "Hi I am alive" << std::endl;
-      pixel_convert_params.nDstBufSize =
-          p_frame->frameInfo.width * p_frame->frameInfo.height * 3;
-
-      ret = IMV_PixelConvert(dev_handle, &pixel_convert_params);
-      if (ret != IMV_OK) {
-        std::cerr << "ERROR: Image convert to BGR failed! Error code " << ret
-                  << std::endl;
-      }
-      p_frame->pData = g_convert_buffers.at(dev_handle);
-      p_frame->frameInfo.pixelFormat = gvspPixelBGR8;
-      std::cout ,""
-    }
-  }
   {
     std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
     g_grabbed_frames.at(dev_handle) = p_frame;
@@ -193,6 +154,7 @@ std::unordered_map<std::string, cv::Mat> FrameGrabber::Next() {
     std::cout << "DEVICE_HANDLE: " << dev_handle << std::endl;
     {
       std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
+      PixelFormatConversion(dev_handle, g_grabbed_frames.at(dev_handle));
       cv::Size size(g_grabbed_frames.at(dev_handle)->frameInfo.width,
                     g_grabbed_frames.at(dev_handle)->frameInfo.height);
       grabbed_frames.insert(std::make_pair(
@@ -508,46 +470,76 @@ int FrameGrabber::MallocConvertBuffer() {
   int64_t width = 0;
   int64_t height = 0;
 
-  for (const std::string& serial_number : camera_list_) {
-    IMV_HANDLE dev_handle = device_handles_.at(serial_number);
-    ret = IMV_GetEnumFeatureValue(dev_handle, "PixelFormat", &pixel_format_val);
+  IMV_HANDLE dev_handle = device_handles_.at(*camera_list_.begin());
+  ret = IMV_GetEnumFeatureValue(dev_handle, "PixelFormat", &pixel_format_val);
 
-    if (ret != IMV_OK) {
-      std::cerr << "ERROR: Get PixelFormat feature value failed! Error code "
-                << ret << std::endl;
-      return ret;
-    }
+  if (ret != IMV_OK) {
+    std::cerr << "ERROR: Get PixelFormat feature value failed! Error code "
+              << ret << std::endl;
+    return ret;
+  }
 
-    if (pixel_format_val == (uint64_t)gvspPixelMono8 ||
-        pixel_format_val == (uint64_t)gvspPixelBGR8) {
-      return IMV_OK;
-    }
+  if (pixel_format_val == (uint64_t)gvspPixelMono8 ||
+      pixel_format_val == (uint64_t)gvspPixelBGR8) {
+    return IMV_OK;
+  }
 
-    ret = IMV_GetIntFeatureValue(dev_handle, "Width", &width);
-    if (ret != IMV_OK) {
-      std::cerr << "ERROR: Get Width feature value failed! Error code " << ret
-                << std::endl;
-      return ret;
-    }
+  ret = IMV_GetIntFeatureValue(dev_handle, "Width", &width);
+  if (ret != IMV_OK) {
+    std::cerr << "ERROR: Get Width feature value failed! Error code " << ret
+              << std::endl;
+    return ret;
+  }
 
-    ret = IMV_GetIntFeatureValue(dev_handle, "Height", &height);
-    if (ret != IMV_OK) {
-      std::cerr << "ERROR: Get Height feature value failed! Error code " << ret
-                << std::endl;
-      return ret;
-    }
+  ret = IMV_GetIntFeatureValue(dev_handle, "Height", &height);
+  if (ret != IMV_OK) {
+    std::cerr << "ERROR: Get Height feature value failed! Error code " << ret
+              << std::endl;
+    return ret;
+  }
 
-    g_convert_buffers.insert(std::make_pair(dev_handle, nullptr));
+  convert_buffer = new unsigned char[(int)width * (int)height * 3];
 
-    g_convert_buffers.at(dev_handle) = (unsigned char*)::operator new(width * height * 3 * sizeof(unsigned char));
-    if (g_convert_buffers.at(dev_handle) == nullptr) {
-      std::cerr << "ERROR: Allocation memory to convert buffer failed!"
-                << std::endl;
-      return IMV_NO_MEMORY;
-    }
+  if (convert_buffer == nullptr) {
+    std::cerr << "ERROR: Allocation memory to convert buffer failed!"
+              << std::endl;
+    return IMV_NO_MEMORY;
   }
 
   return IMV_OK;
+}
+
+void FrameGrabber::PixelFormatConversion(IMV_HANDLE dev_handle,
+                                         IMV_Frame* frame) {
+  int ret = IMV_OK;
+  IMV_PixelConvertParam pixel_convert_params;
+
+  // mono8 and BGR8 raw data does not to be converted.
+  if ((frame->frameInfo.pixelFormat != gvspPixelMono8) &&
+      (frame->frameInfo.pixelFormat != gvspPixelBGR8)) {
+    pixel_convert_params.nWidth = frame->frameInfo.width;
+    pixel_convert_params.nHeight = frame->frameInfo.height;
+    pixel_convert_params.ePixelFormat = frame->frameInfo.pixelFormat;
+    pixel_convert_params.pSrcData = frame->pData;
+    pixel_convert_params.nSrcDataLen = frame->frameInfo.size;
+    pixel_convert_params.nPaddingX = frame->frameInfo.paddingX;
+    pixel_convert_params.nPaddingY = frame->frameInfo.paddingY;
+    pixel_convert_params.eBayerDemosaic = demosaicNearestNeighbor;
+    pixel_convert_params.eDstPixelFormat = gvspPixelBGR8;
+
+    pixel_convert_params.pDstBuf = convert_buffer;
+
+    pixel_convert_params.nDstBufSize =
+        frame->frameInfo.width * frame->frameInfo.height * 3;
+
+    ret = IMV_PixelConvert(dev_handle, &pixel_convert_params);
+    if (ret != IMV_OK) {
+      std::cerr << "ERROR: Image convert to BGR failed! Error code " << ret
+                << std::endl;
+    }
+    frame->pData = convert_buffer;
+    frame->frameInfo.pixelFormat = gvspPixelBGR8;
+  }
 }
 
 void FrameGrabber::ExecuteTriggerSoft() {
