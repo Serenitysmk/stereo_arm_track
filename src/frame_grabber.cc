@@ -152,22 +152,17 @@ std::unordered_map<std::string, cv::Mat> FrameGrabber::Next() {
 
   for (const std::string& serial_number : camera_list_) {
     IMV_HANDLE dev_handle = device_handles_.at(serial_number);
-    std::cout << "DEVICE_HANDLE: " << dev_handle << std::endl;
-    {
-      std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
-      PixelFormatConversion(dev_handle, g_grabbed_frames.at(dev_handle));
-      cv::Size size(g_grabbed_frames.at(dev_handle)->frameInfo.width,
-                    g_grabbed_frames.at(dev_handle)->frameInfo.height);
-      grabbed_frames.insert(std::make_pair(
-          serial_number,
-          cv::Mat(size, CV_8UC3,
-                  (uchar*)g_grabbed_frames.at(dev_handle)->pData)));
-    }
+
+    PixelFormatConversion(dev_handle, g_grabbed_frames.at(dev_handle));
+    cv::Size size(g_grabbed_frames.at(dev_handle)->frameInfo.width,
+                  g_grabbed_frames.at(dev_handle)->frameInfo.height);
+    grabbed_frames.insert(std::make_pair(
+        serial_number,
+        cv::Mat(size, CV_8UC3,
+                (uchar*)g_grabbed_frames.at(dev_handle)->pData)));
   }
-  {
-    std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
-    g_grabbed_frames.clear();
-  }
+
+  g_grabbed_frames.clear();
 
   return grabbed_frames;
 }
@@ -516,7 +511,7 @@ void FrameGrabber::PixelFormatConversion(IMV_HANDLE dev_handle,
                                          IMV_Frame* frame) {
   int ret = IMV_OK;
   IMV_PixelConvertParam pixel_convert_params;
-  std::cout << "Start pixel format conversion" << std::endl;
+
   // mono8 and BGR8 raw data does not to be converted.
   if ((frame->frameInfo.pixelFormat != gvspPixelMono8) &&
       (frame->frameInfo.pixelFormat != gvspPixelBGR8)) {
