@@ -52,7 +52,7 @@ class FrameGrabber {
   const std::vector<int> camera_list_;
 
   // Device handles.
-  std::vector<IMV_HANDLE> device_handles_;
+  std::unordered_map<std::string, IMV_HANDLE> device_handles_;
 
   // Grabbed frames queue.
   std::queue<std::vector<IMV_Frame*>> frames_queue_;
