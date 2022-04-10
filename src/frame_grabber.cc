@@ -53,9 +53,11 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
     pixel_convert_params.nPaddingY = p_frame->frameInfo.paddingY;
     pixel_convert_params.eBayerDemosaic = demosaicNearestNeighbor;
     pixel_convert_params.eDstPixelFormat = gvspPixelBGR8;
+    
     {
       std::unique_lock<std::mutex> lock(g_convert_buffer_mutex);
-      pixel_convert_params.pDstBuf = g_convert_buffers[dev_handle];
+      pixel_convert_params.pDstBuf = g_convert_buffers.at(dev_handle);
+      std::cout << "Hi I am alive" << std::endl;
       pixel_convert_params.nDstBufSize =
           p_frame->frameInfo.width * p_frame->frameInfo.height * 3;
 
@@ -64,13 +66,14 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
         std::cerr << "ERROR: Image convert to BGR failed! Error code " << ret
                   << std::endl;
       }
-      p_frame->pData = g_convert_buffers[dev_handle];
+      p_frame->pData = g_convert_buffers.at(dev_handle);
       p_frame->frameInfo.pixelFormat = gvspPixelBGR8;
+      std::cout ,""
     }
   }
   {
     std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
-    g_grabbed_frames[dev_handle] = p_frame;
+    g_grabbed_frames.at(dev_handle) = p_frame;
     g_grab_finish_condition.notify_one();
   }
 
@@ -534,8 +537,9 @@ int FrameGrabber::MallocConvertBuffer() {
       return ret;
     }
 
-    g_convert_buffers.at(dev_handle) =
-        new unsigned char[(int)width * (int)height * 3];
+    g_convert_buffers.insert(std::make_pair(dev_handle, nullptr));
+
+    g_convert_buffers.at(dev_handle) = (unsigned char*)::operator new(width * height * 3 * sizeof(unsigned char));
     if (g_convert_buffers.at(dev_handle) == nullptr) {
       std::cerr << "ERROR: Allocation memory to convert buffer failed!"
                 << std::endl;
