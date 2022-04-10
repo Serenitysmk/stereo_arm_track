@@ -68,6 +68,10 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
       image_data = g_convert_buffer;
       pixel_format = gvspPixelBGR8;
       std::cout << "Pixel format converted" << std::endl;
+      cv::Size img_size(p_frame->frameInfo.width, p_frame->frameInfo.height);
+      cv::Mat img(img_size, CV_8UC3, (uchar*)image_data);
+      cv::imwrite("Frame.png", img);
+      //cv::waitKey(1);
     }
   } else {
     image_data = p_frame->pData;
@@ -79,7 +83,6 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
     g_grabbed_frames[dev_handle] = p_frame;
     g_grab_finish_condition.notify_one();
   }
-
   std::cout << "Get frame blockId = " << p_frame->frameInfo.blockId
             << std::endl;
   return;
@@ -207,6 +210,7 @@ std::unordered_map<int, cv::Mat> FrameGrabber::Next() {
     std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
     g_grabbed_frames.clear();
   }
+  
   return grabbed_frames;
 }
 

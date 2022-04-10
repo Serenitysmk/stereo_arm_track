@@ -15,7 +15,7 @@ using namespace colmap;
 // Define variables
 ////////////////////////////////////////////////////////////////////////////////
 DEFINE_int32(num_cameras, 4, "Number of cameras.");
-DEFINE_string(camera_list, "2, 3", "Used camera index");
+DEFINE_string(camera_list, "2", "Used camera index");
 
 void RunTestFrameGrabber();
 
@@ -58,8 +58,8 @@ void RunTestFrameGrabber() {
     // cv::waitKey(0);
     // cv::imshow("Frame2", frames.at(2));
     // cv::imshow("Frame3", frames.at(3));
-    cv::imwrite("./frame2.png", frames.at(2));
-    cv::imwrite("./frame3.png", frames.at(3));
+   // cv::imwrite("./frame2.png", frames.at(2));
+    //cv::imwrite("./frame3.png", frames.at(3));
     //cv::waitKey(0);
   } else {
     std::cerr << "ERROR: Grab frames failed!" << std::endl;
