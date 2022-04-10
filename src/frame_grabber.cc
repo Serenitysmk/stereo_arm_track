@@ -65,11 +65,6 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
       }
       p_frame->pData = g_convert_buffer;
       p_frame->frameInfo.pixelFormat = gvspPixelBGR8;
-      std::cout << "Pixel format converted" << std::endl;
-      // cv::Size img_size(p_frame->frameInfo.width, p_frame->frameInfo.height);
-      // cv::Mat img(img_size, CV_8UC3, (uchar*)image_data);
-      // cv::imwrite("Frame.png", img);
-      // cv::waitKey(1);
     }
   }
   {
@@ -77,8 +72,7 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
     g_grabbed_frames[dev_handle] = p_frame;
     g_grab_finish_condition.notify_one();
   }
-  std::cout << "Get frame blockId = " << p_frame->frameInfo.blockId
-            << std::endl;
+
   return;
 }
 
@@ -189,7 +183,7 @@ std::unordered_map<std::string, cv::Mat> FrameGrabber::Next() {
       return g_grabbed_frames.size() == camera_list_.size();
     });
   }
-  std::cout << "num grabbed frames: " << g_grabbed_frames.size() << std::endl;
+
   for (const std::string& serial_number : camera_list_) {
     IMV_HANDLE dev_handle = device_handles_.at(serial_number);
     {

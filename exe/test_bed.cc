@@ -55,13 +55,11 @@ void RunTestFrameGrabber() {
   if (grab_success) {
     std::cout << "Grab success!" << std::endl;
     for (const auto& frame : frames) {
-      // cv::imshow("Frame_" + std::to_string(frame.first), frame.second);
-      std::cout << "Frame: " << frame.first << " , width: " << frame.second.cols
-                << " , height: " << frame.second.rows
-                << " middle pixel: " << frame.second.at<cv::Vec3b>(500, 500)
-                << std::endl;
+      std::stringstream stream;
+      stream << "Frame_" << frame.first << ".png";
+      cv::imwrite(stream.str(), frame.second);
     }
-    cv::imwrite("./frames_7L03E0EPAK00002.png", frames.at("7L03E0EPAK00002"));
+
   } else {
     std::cerr << "ERROR: Grab frames failed!" << std::endl;
   }
