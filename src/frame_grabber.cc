@@ -39,9 +39,7 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
 
   int ret = IMV_OK;
   IMV_PixelConvertParam pixel_convert_params;
-  unsigned char* image_data = nullptr;
-  IMV_EPixelType pixel_format = gvspPixelMono8;
-
+  
   // mono8 and BGR8 raw data does not to be converted.
   if ((p_frame->frameInfo.pixelFormat != gvspPixelMono8) &&
       (p_frame->frameInfo.pixelFormat != gvspPixelBGR8)) {
@@ -65,19 +63,15 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
         std::cerr << "ERROR: Image convert to BGR failed! Error code " << ret
                   << std::endl;
       }
-      image_data = g_convert_buffer;
-      pixel_format = gvspPixelBGR8;
+      p_frame->pData = g_convert_buffer;
+      p_frame->frameInfo.pixelFormat = gvspPixelBGR8;
       std::cout << "Pixel format converted" << std::endl;
-      cv::Size img_size(p_frame->frameInfo.width, p_frame->frameInfo.height);
-      cv::Mat img(img_size, CV_8UC3, (uchar*)image_data);
-      cv::imwrite("Frame.png", img);
+      // cv::Size img_size(p_frame->frameInfo.width, p_frame->frameInfo.height);
+      // cv::Mat img(img_size, CV_8UC3, (uchar*)image_data);
+      // cv::imwrite("Frame.png", img);
       //cv::waitKey(1);
     }
-  } else {
-    image_data = p_frame->pData;
-    pixel_format = p_frame->frameInfo.pixelFormat;
-  }
-
+  } 
   {
     std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
     g_grabbed_frames[dev_handle] = p_frame;
