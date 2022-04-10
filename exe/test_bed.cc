@@ -14,8 +14,8 @@ using namespace colmap;
 ////////////////////////////////////////////////////////////////////////////////
 // Define variables
 ////////////////////////////////////////////////////////////////////////////////
-DEFINE_int32(num_cameras, 3, "Number of cameras.");
-DEFINE_string(camera_list, "1, 2", "Used camera index");
+DEFINE_int32(num_cameras, 4, "Number of cameras.");
+DEFINE_string(camera_list, "2, 3", "Used camera index");
 
 void RunTestFrameGrabber();
 
@@ -44,6 +44,7 @@ void RunTestFrameGrabber() {
   std::unordered_map<int, cv::Mat> frames = frame_grabber.Next();
 
   bool grab_success = true;
+  std::cout << "Number of frames: " << frames.size() << std::endl;
   for (const auto& frame : frames) {
     if (frame.second.empty()) grab_success = false;
   }
@@ -51,9 +52,15 @@ void RunTestFrameGrabber() {
   if (grab_success) {
     std::cout << "Grab success!" << std::endl;
     for (const auto& frame: frames) {
-      cv::imshow("Frame_" + std::to_string(frame.first), frame.second);
+      //cv::imshow("Frame_" + std::to_string(frame.first), frame.second);
+      std::cout << "Frame: " << frame.first << " , width: " << frame.second.cols << " , height: " << frame.second.rows << " middle pixel: " << frame.second.at<cv::Vec3b>(500, 500) << std::endl;
     }
-    cv::waitKey(0);
+    // cv::waitKey(0);
+    // cv::imshow("Frame2", frames.at(2));
+    // cv::imshow("Frame3", frames.at(3));
+    cv::imwrite("./frame2.png", frames.at(2));
+    cv::imwrite("./frame3.png", frames.at(3));
+    //cv::waitKey(0);
   } else {
     std::cerr << "ERROR: Grab frames failed!" << std::endl;
   }
