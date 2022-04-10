@@ -12,17 +12,17 @@
 
 class FrameGrabber {
  public:
-  FrameGrabber(const size_t num_cameras, const std::vector<int>& camera_list);
+  FrameGrabber(const size_t num_cameras, const std::vector<std::string>& camera_list);
 
   ~FrameGrabber();
 
-  const std::vector<int>& CameraList() const;
+  const std::vector<std::string>& CameraList() const;
 
   // Init frame grabber.
   bool Init();
 
   // Grab next frames (Multiple cameras).
-  std::unordered_map<int, cv::Mat> Next();
+  std::unordered_map<std::string, cv::Mat> Next();
 
   // Record videos for a period of time.
   void Record(const std::string& output_dir, const std::chrono::minutes& time,
@@ -49,7 +49,7 @@ class FrameGrabber {
   bool InitCameras();
 
   size_t num_cameras_;
-  const std::vector<int> camera_list_;
+  const std::vector<std::string> camera_list_;
 
   // Device handles.
   std::unordered_map<std::string, IMV_HANDLE> device_handles_;

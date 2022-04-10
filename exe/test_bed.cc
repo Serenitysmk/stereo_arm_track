@@ -15,11 +15,11 @@ using namespace colmap;
 // Define variables
 ////////////////////////////////////////////////////////////////////////////////
 DEFINE_int32(num_cameras, 4, "Number of cameras.");
-DEFINE_string(camera_list, "2", "Used camera index");
-7L03E0EPAK00002
-7L03E0EPAK00005
-7L03E0EPAK00022
-7L03E0EPAK00026
+DEFINE_string(
+    camera_list,
+    "7L03E0EPAK00002, 7L03E0EPAK00005, 7L03E0EPAK00022, 7L03E0EPAK00026",
+    "Used camera serial numbers");
+
 void RunTestFrameGrabber();
 
 int main(int argc, char** argv) {
@@ -37,14 +37,14 @@ int main(int argc, char** argv) {
 
 void RunTestFrameGrabber() {
   FrameGrabber frame_grabber(FLAGS_num_cameras,
-                             CSVToVector<int>(FLAGS_camera_list));
+                             CSVToVector<std::string>(FLAGS_camera_list));
 
   if (!frame_grabber.Init()) {
     std::cerr << "ERROR: Failed to initialize the frame grabber!" << std::endl;
     return;
   }
 
-  std::unordered_map<int, cv::Mat> frames = frame_grabber.Next();
+  std::unordered_map<std::string, cv::Mat> frames = frame_grabber.Next();
 
   bool grab_success = true;
   std::cout << "Number of frames: " << frames.size() << std::endl;
@@ -61,7 +61,7 @@ void RunTestFrameGrabber() {
                 << " middle pixel: " << frame.second.at<cv::Vec3b>(500, 500)
                 << std::endl;
     }
-    cv::imwrite("./frame2.png", frames.at(2));
+    cv::imwrite("./frames_7L03E0EPAK00002.png", frames.at("7L03E0EPAK00002"));
   } else {
     std::cerr << "ERROR: Grab frames failed!" << std::endl;
   }

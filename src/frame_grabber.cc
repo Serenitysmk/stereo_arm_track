@@ -39,7 +39,7 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
 
   int ret = IMV_OK;
   IMV_PixelConvertParam pixel_convert_params;
-  
+
   // mono8 and BGR8 raw data does not to be converted.
   if ((p_frame->frameInfo.pixelFormat != gvspPixelMono8) &&
       (p_frame->frameInfo.pixelFormat != gvspPixelBGR8)) {
@@ -69,9 +69,9 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
       // cv::Size img_size(p_frame->frameInfo.width, p_frame->frameInfo.height);
       // cv::Mat img(img_size, CV_8UC3, (uchar*)image_data);
       // cv::imwrite("Frame.png", img);
-      //cv::waitKey(1);
+      // cv::waitKey(1);
     }
-  } 
+  }
   {
     std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
     g_grabbed_frames[dev_handle] = p_frame;
@@ -99,19 +99,19 @@ void ExecuteSoftTrigger(IMV_HANDLE dev_handle) {
 }  // namespace
 
 FrameGrabber::FrameGrabber(const size_t num_cameras,
-                           const std::vector<int>& camera_list)
+                           const std::vector<std::string>& camera_list)
     : num_cameras_(num_cameras), camera_list_(camera_list) {
   CHECK_GT(camera_list_.size(), 0);
 }
 
 FrameGrabber::~FrameGrabber() {
-  for (IMV_HANDLE dev_handle : device_handles_) {
-    if (dev_handle != nullptr) IMV_DestroyHandle(dev_handle);
+  for (const auto& dev_handle : device_handles_) {
+    if (dev_handle.second != nullptr) IMV_DestroyHandle(dev_handle.second);
   }
   device_handles_.clear();
 }
 
-const std::vector<int>& FrameGrabber::CameraList() const {
+const std::vector<std::string>& FrameGrabber::CameraList() const {
   return camera_list_;
 }
 
@@ -137,23 +137,25 @@ bool FrameGrabber::Init() {
     return false;
   }
 
-  device_handles_.resize(device_info_list.nDevNum);
   for (size_t i = 0; i < device_info_list.nDevNum; i++) {
-    ret = IMV_CreateHandle(&device_handles_[i], modeByIndex, (void*)&i);
+    IMV_HANDLE dev_handle = nullptr;
+    ret = IMV_CreateHandle(&dev_handle, modeByIndex, (void*)&i);
     if (ret != IMV_OK) {
       std::cerr << "ERROR: Create device handle failed! Error code " << ret
                 << std::endl;
       return false;
     }
+    device_handles_.insert(
+        std::make_pair(device_info_list.pDevInfo[i].serialNumber, dev_handle));
   }
 
   // Print device info list.
   PrintDeviceInfo(device_info_list);
 
   std::cout << "Prepare cameras to grab frames." << std::endl;
-  std::cout << "Use camera index: ";
-  for (const int& idx : camera_list_) {
-    std::cout << idx << " ";
+  std::cout << "Use camera: ";
+  for (const std::string& serial_number : camera_list_) {
+    std::cout << serial_number << " ";
   }
   std::cout << std::endl;
 
@@ -165,7 +167,7 @@ bool FrameGrabber::Init() {
   }
 
   // Prepare convert buffer.
-  ret = MallocConvertBuffer(device_handles_[*camera_list_.begin()]);
+  ret = MallocConvertBuffer(device_handles_.at(*camera_list_.begin()));
   if (ret != IMV_OK) {
     return false;
   }
@@ -174,9 +176,9 @@ bool FrameGrabber::Init() {
   return true;
 }
 
-std::unordered_map<int, cv::Mat> FrameGrabber::Next() {
+std::unordered_map<std::string, cv::Mat> FrameGrabber::Next() {
   int ret = IMV_OK;
-  std::unordered_map<int, cv::Mat> grabbed_frames;
+  std::unordered_map<std::string, cv::Mat> grabbed_frames;
 
   // Execute all triggers.
   ExecuteTriggerSoft();
@@ -188,23 +190,22 @@ std::unordered_map<int, cv::Mat> FrameGrabber::Next() {
     });
   }
   std::cout << "num grabbed frames: " << g_grabbed_frames.size() << std::endl;
-  for (const int& camera_idx : camera_list_) {
-    IMV_HANDLE dev_handle = device_handles_[camera_idx];
+  for (const std::string& serial_number : camera_list_) {
+    IMV_HANDLE dev_handle = device_handles_.at(serial_number);
     {
       std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
       cv::Size size(g_grabbed_frames[dev_handle]->frameInfo.width,
                     g_grabbed_frames[dev_handle]->frameInfo.height);
       grabbed_frames.insert(std::make_pair(
-          camera_idx,
-          cv::Mat(size, CV_8UC3,
-          (uchar*)g_grabbed_frames[dev_handle]->pData)));
+          serial_number,
+          cv::Mat(size, CV_8UC3, (uchar*)g_grabbed_frames[dev_handle]->pData)));
     }
   }
   {
     std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
     g_grabbed_frames.clear();
   }
-  
+
   return grabbed_frames;
 }
 
@@ -224,42 +225,43 @@ void FrameGrabber::Record(const std::string& output_dir,
 
   // Recording loop;
 
-  double recorded_time = 0.0;
-  auto start = std::chrono::high_resolution_clock::now();
-  auto end = std::chrono::high_resolution_clock::now() + time;
+  // double recorded_time = 0.0;
+  // auto start = std::chrono::high_resolution_clock::now();
+  // auto end = std::chrono::high_resolution_clock::now() + time;
 
-  while (std::chrono::high_resolution_clock::now() < end) {
-    ExecuteTriggerSoft();
+  // while (std::chrono::high_resolution_clock::now() < end) {
+  //   ExecuteTriggerSoft();
 
-    std::vector<IMV_Frame*> frames;
-    frames.reserve(device_handles_.size());
-    // Push to the frames queue.
-    for (IMV_HANDLE dev_handle : device_handles_) {
-      {
-        std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
-        frames.emplace_back(g_grabbed_frames[dev_handle]);
-      }
-    }
-    {
-      std::unique_lock<std::mutex> lock(frames_queue_mutex_);
-      frames_queue_.push(frames);
-    }
+  //   std::vector<IMV_Frame*> frames;
+  //   frames.reserve(device_handles_.size());
+  //   // Push to the frames queue.
+  //   for (IMV_HANDLE dev_handle : device_handles_) {
+  //     {
+  //       std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
+  //       frames.emplace_back(g_grabbed_frames[dev_handle]);
+  //     }
+  //   }
+  //   {
+  //     std::unique_lock<std::mutex> lock(frames_queue_mutex_);
+  //     frames_queue_.push(frames);
+  //   }
 
-    std::cout << "Frames grabbed and pushed to the queue" << std::endl;
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-  }
-  end = std::chrono::high_resolution_clock::now();
-  recorded_time =
-      std::chrono::duration_cast<std::chrono::minutes>(end - start).count();
-  std::cout << "Video recording stopped, time: " << recorded_time << " minutes"
-            << std::endl;
+  //   std::cout << "Frames grabbed and pushed to the queue" << std::endl;
+  //   std::this_thread::sleep_for(std::chrono::seconds(1));
+  // }
+  // end = std::chrono::high_resolution_clock::now();
+  // recorded_time =
+  //     std::chrono::duration_cast<std::chrono::minutes>(end - start).count();
+  // std::cout << "Video recording stopped, time: " << recorded_time << "
+  // minutes"
+  //           << std::endl;
   return;
 }
 
 bool FrameGrabber::Close() {
   int ret = IMV_OK;
-  for (const int& camera_idx : camera_list_) {
-    IMV_HANDLE dev_handle = device_handles_[camera_idx];
+  for (const std::string& serial_number : camera_list_) {
+    IMV_HANDLE dev_handle = device_handles_.at(serial_number);
     if (dev_handle == nullptr) {
       continue;
     }
@@ -310,20 +312,22 @@ bool FrameGrabber::TestGrabFrameOneCamera() {
     return false;
   }
 
-  device_handles_.resize(device_info_list.nDevNum);
   for (size_t i = 0; i < device_info_list.nDevNum; i++) {
-    ret = IMV_CreateHandle(&device_handles_[i], modeByIndex, (void*)&i);
+    IMV_HANDLE dev_handle;
+    ret = IMV_CreateHandle(&dev_handle, modeByIndex, (void*)&i);
     if (ret != IMV_OK) {
       std::cerr << "ERROR: Create device handle failed! Error code " << ret
                 << std::endl;
       return false;
     }
+    device_handles_.insert(
+        std::make_pair(device_info_list.pDevInfo[i].serialNumber, dev_handle));
   }
 
   // Print device info list.
   PrintDeviceInfo(device_info_list);
 
-  IMV_HANDLE dev_handle = device_handles_[2];
+  IMV_HANDLE dev_handle = device_handles_.at("7L03E0EPAK00002");
 
   ret = IMV_Open(dev_handle);
   if (ret != IMV_OK) {
@@ -543,8 +547,8 @@ int FrameGrabber::MallocConvertBuffer(IMV_HANDLE dev_handle) {
 
 void FrameGrabber::ExecuteTriggerSoft() {
   int ret = IMV_OK;
-  for (const int& camera_idx : camera_list_) {
-    IMV_HANDLE dev_handle = device_handles_[camera_idx];
+  for (const std::string& serial_number : camera_list_) {
+    IMV_HANDLE dev_handle = device_handles_.at(serial_number);
     ret = IMV_ExecuteCommandFeature(dev_handle, "TriggerSoftware");
     if (ret != IMV_OK) {
       std::cerr << "WARNING: Execute TriggerSoftware failed! Error code " << ret
@@ -556,18 +560,18 @@ void FrameGrabber::ExecuteTriggerSoft() {
 bool FrameGrabber::InitCameras() {
   // Open cameras.
   std::cout << "Init cameras" << std::endl;
-  for (const int& camera_idx : camera_list_) {
+  for (const std::string& serial_number : camera_list_) {
     int ret = IMV_OK;
 
-    IMV_HANDLE dev_handle = device_handles_[camera_idx];
+    IMV_HANDLE dev_handle = device_handles_.at(serial_number);
 
     ret = IMV_Open(dev_handle);
     if (ret != IMV_OK) {
-      std::cerr << "ERROR: Open camera " << camera_idx << " failed! Error code "
-                << ret << std::endl;
+      std::cerr << "ERROR: Open camera " << serial_number
+                << " failed! Error code " << ret << std::endl;
       return false;
     }
-    std::cout << "Camera " << camera_idx << " opened" << std::endl;
+    std::cout << "Camera " << serial_number << " opened" << std::endl;
 
     // Set software trigger config.
     ret = SetSoftTriggerConf(dev_handle);
