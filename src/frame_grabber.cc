@@ -90,7 +90,9 @@ void ExecuteSoftTrigger(IMV_HANDLE dev_handle) {
 
 FrameGrabber::FrameGrabber(const size_t num_cameras,
                            const std::vector<int>& camera_list)
-    : num_cameras_(num_cameras), camera_list_(camera_list) {}
+    : num_cameras_(num_cameras), camera_list_(camera_list) {
+  CHECK_GT(camera_list_.size(), 0);
+}
 
 FrameGrabber::~FrameGrabber() {
   for (IMV_HANDLE dev_handle : device_handles_) {
@@ -149,7 +151,7 @@ bool FrameGrabber::Init() {
   }
 
   // Prepare convert buffer.
-  ret = MallocConvertBuffer(device_handles_[0]);
+  ret = MallocConvertBuffer(device_handles_[*camera_list_.begin()]);
   if (ret != IMV_OK) {
     return false;
   }
