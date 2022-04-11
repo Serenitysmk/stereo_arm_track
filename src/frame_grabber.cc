@@ -76,6 +76,7 @@ const std::vector<std::string>& FrameGrabber::CameraList() const {
 }
 
 bool FrameGrabber::Init() {
+  PrintHeading1("Initialize cameras");
   // Find camera devices and return if no devices are found
   // or the number of devices is different from the setting.
   int ret = IMV_OK;
@@ -112,8 +113,6 @@ bool FrameGrabber::Init() {
   // Print device info list.
   PrintDeviceInfo(device_info_list);
 
-  std::cout << "Prepare cameras to grab frames." << std::endl;
-  std::cout << "Use camera: ";
   for (const std::string& serial_number : camera_list_) {
     std::cout << serial_number << " ";
   }
@@ -157,16 +156,12 @@ void FrameGrabber::Record(
     const std::string& output_dir,
     const std::chrono::duration<double, std::ratio<60>>& time,
     const double frame_rate, const bool display) {
-  // Start the video writer thread.
-  std::thread video_writer_worker(&FrameGrabber::VideoWriterWorker, this,
-                                  std::ref(output_dir), frame_rate);
-
   // Time interval in millisecond between the last frame and the current frame.
   auto frame_interval =
       std::chrono::duration<double, std::milli>(1000.0 / frame_rate);
 
   // Recording loop;
-  PrintHeading2("Start video recording");
+  PrintHeading1("Start video recording");
 
   double recorded_time = 0.0;
   auto start = std::chrono::high_resolution_clock::now();
@@ -201,14 +196,18 @@ void FrameGrabber::Record(
       std::chrono::duration_cast<std::chrono::duration<double, std::ratio<60>>>(
           end - start)
           .count();
-  std::cout << "Video recording stopped, time: " << recorded_time << " minutes" << "  cnt: " << cnt
-            << std::endl;
+  std::cout << "Video recording stopped, time: " << recorded_time
+            << " minutes, number of frames: " << cnt << std::endl;
 
   {
     std::unique_lock<std::mutex> lock(frames_queue_mutex_);
     grab_frames_finished_ = true;
     std::cout << frames_queue_.size() << " frames recorded!" << std::endl;
   }
+
+  // Start the video writer thread.
+  std::thread video_writer_worker(&FrameGrabber::VideoWriterWorker, this,
+                                  std::ref(output_dir), frame_rate);
 
   video_writer_worker.join();
 
@@ -560,7 +559,6 @@ void FrameGrabber::ExecuteTriggerSoft() {
 
 bool FrameGrabber::InitCameras() {
   // Open cameras.
-  std::cout << "Init cameras" << std::endl;
   for (const std::string& serial_number : camera_list_) {
     int ret = IMV_OK;
 

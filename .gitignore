@@ -7,3 +7,4 @@ install
 install-debug/
 install-release/
 install/
+TEST*/
