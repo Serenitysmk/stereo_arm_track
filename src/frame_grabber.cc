@@ -167,21 +167,23 @@ void FrameGrabber::Record(
   auto start = std::chrono::high_resolution_clock::now();
   auto end = std::chrono::high_resolution_clock::now() + time + frame_interval;
 
-  size_t cnt = 0;
   while (std::chrono::high_resolution_clock::now() <= end) {
     auto grab_start = std::chrono::high_resolution_clock::now();
 
     NextImpl();
 
     // Push to the frames queue.
-    {
-      std::unique_lock<std::mutex> lock(frames_queue_mutex_);
-      frames_queue_.push(g_grabbed_frames);
-    }
+    frames_queue_.push(g_grabbed_frames);
     g_grabbed_frames.clear();
 
+    auto current_time = std::chrono::high_resolution_clock::now();
+    recorded_time =
+        std::chrono::duration_cast<std::chrono::seconds>(current_time - start)
+            .count();
+    std::cout << "Recording for " << recorded_time << " seconds ..."
+              << std::endl;
+
     auto grab_end = std::chrono::high_resolution_clock::now();
-    cnt++;
 
     auto grab_elapsed =
         std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(
@@ -197,19 +199,11 @@ void FrameGrabber::Record(
           end - start)
           .count();
   std::cout << "Video recording stopped, time: " << recorded_time
-            << " minutes, number of frames: " << cnt << std::endl;
+            << " minutes, number of frames: " << frames_queue_.size()
+            << std::endl;
 
-  {
-    std::unique_lock<std::mutex> lock(frames_queue_mutex_);
-    grab_frames_finished_ = true;
-    std::cout << frames_queue_.size() << " frames recorded!" << std::endl;
-  }
-
-  // Start the video writer thread.
-  std::thread video_writer_worker(&FrameGrabber::VideoWriterWorker, this,
-                                  std::ref(output_dir), frame_rate);
-
-  video_writer_worker.join();
+  // Write out videos.
+  VideoWriter(output_dir, frame_rate);
 
   return;
 }
@@ -625,8 +619,8 @@ void FrameGrabber::NextImpl() {
   }
 }
 
-void FrameGrabber::VideoWriterWorker(const std::string& output_dir,
-                                     const double frame_rate) {
+void FrameGrabber::VideoWriter(const std::string& output_dir,
+                               const double frame_rate) {
   CreateDirIfNotExists(output_dir);
 
   std::unordered_map<std::string, std::string> output_paths;
@@ -650,38 +644,15 @@ void FrameGrabber::VideoWriterWorker(const std::string& output_dir,
     video_writers.insert(std::make_pair(serial_number, video_writer));
   }
 
-  while (true) {
-    bool new_frame = false;
-    // Check new frame.
-    {
-      std::unique_lock<std::mutex> lock(frames_queue_mutex_);
-      new_frame = !frames_queue_.empty();
+  while (!frames_queue_.empty()) {
+    for (const std::string& serial_number : camera_list_) {
+      IMV_HANDLE dev_handle = device_handles_.at(serial_number);
+      cv::Mat frame =
+          FrameToCvMat(dev_handle, frames_queue_.front().at(dev_handle));
+
+      video_writers.at(serial_number) << frame;
     }
-    if (new_frame) {
-      for (const std::string& serial_number : camera_list_) {
-        IMV_HANDLE dev_handle = device_handles_.at(serial_number);
-        cv::Mat frame;
-        {
-          std::unique_lock<std::mutex> lock(frames_queue_mutex_);
-          frame =
-              FrameToCvMat(dev_handle, frames_queue_.front().at(dev_handle));
-        }
-        video_writers.at(serial_number) << frame;
-      }
-      {
-        std::unique_lock<std::mutex> lock(frames_queue_mutex_);
-        frames_queue_.pop();
-      }
-    }
-    // Check finish.
-    bool finish = false;
-    {
-      std::unique_lock<std::mutex> lock(frames_queue_mutex_);
-      finish = grab_frames_finished_;
-    }
-    if (finish) {
-      break;
-    }
+    frames_queue_.pop();
   }
   for (const std::string& serial_number : camera_list_) {
     video_writers.at(serial_number).release();

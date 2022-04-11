@@ -61,8 +61,8 @@ class FrameGrabber {
   // Actual implementation of getting the next frame.
   void NextImpl();
 
-  // Video writer worker.
-  void VideoWriterWorker(const std::string& output_dir,
+  // Video writer.
+  void VideoWriter(const std::string& output_dir,
                          const double frame_rate);
 
   size_t num_cameras_;
@@ -75,8 +75,6 @@ class FrameGrabber {
 
   // Grabbed frames queue.
   std::queue<std::unordered_map<IMV_HANDLE, IMV_Frame*>> frames_queue_;
-  bool grab_frames_finished_ = false;
-  std::mutex frames_queue_mutex_;
 };
 
 #endif  // STEREO_ARM_TRACK_FRAME_GRABBER_H_
