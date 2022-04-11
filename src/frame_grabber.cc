@@ -187,7 +187,6 @@ void FrameGrabber::Record(const std::string& output_dir,
       std::unique_lock<std::mutex> lock(frames_queue_mutex_);
       frames_queue_.push(g_grabbed_frames);
     }
-
     g_grabbed_frames.clear();
 
     auto grab_end = std::chrono::high_resolution_clock::now();
@@ -197,7 +196,9 @@ void FrameGrabber::Record(const std::string& output_dir,
             .count());
     std::cout << "Frames grabbed and pushed to the queue, grab ellapsed: "
               << grab_elapsed << " ms" << std::endl;
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    if(frame_interval > grab_elapsed){
+      std::this_thread::sleep_for(std::chrono::milliseconds(int(frame_interval - grab_elapsed)));
+    }
   }
   end = std::chrono::high_resolution_clock::now();
   recorded_time =
