@@ -156,19 +156,9 @@ std::unordered_map<std::string, cv::Mat> FrameGrabber::Next() {
 void FrameGrabber::Record(const std::string& output_dir,
                           const std::chrono::minutes& time,
                           const double frame_rate, const bool display) {
-  CreateDirIfNotExists(output_dir);
-
-  std::unordered_map<std::string, std::string> output_paths;
-  std::unordered_map<std::string, cv::VideoWriter> video_writers;
-
-  for (const std::string& serial_number : camera_list_) {
-    output_paths.insert(std::make_pair(
-        serial_number, JoinPaths(output_dir, serial_number + ".ts")));
-    cv::VideoWriter video_writer(output_paths.at(serial_number),
-                                 cv::VideoWriter::fourcc('M', 'P', 'E', 'G'),
-                                 frame_rate, cv::Size(2048, 1536));
-    video_writers.insert(std::make_pair(serial_number, video_writer));
-  }
+  // Start the video writer thread.
+  std::thread video_writer_worker(&FrameGrabber::VideoWriterWorker, this,
+                                  std::ref(output_dir), frame_rate);
 
   // Time interval in millisecond between the last frame and the current frame.
   const double frame_interval = 1000.0 / frame_rate;
@@ -211,21 +201,15 @@ void FrameGrabber::Record(const std::string& output_dir,
   std::cout << "Video recording stopped, time: " << recorded_time << " minutes"
             << std::endl;
 
-  std::cout << frames_queue_.size() << " frames grabbed!" << std::endl;
+  std::cout << frames_queue_.size() << " frames recorded!" << std::endl;
 
-  while (!frames_queue_.empty()) {
-    for (const std::string& serial_number : camera_list_) {
-      IMV_HANDLE dev_handle = device_handles_.at(serial_number);
-      cv::Mat frame =
-          FrameToCvMat(dev_handle, frames_queue_.front().at(dev_handle));
-      video_writers.at(serial_number) << frame;
-    }
-    frames_queue_.pop();
+  {
+    std::unique_lock<std::mutex> lock(frames_queue_mutex_);
+    grab_frames_finished_ = true;
   }
 
-  for (const std::string& serial_number : camera_list_) {
-    video_writers.at(serial_number).release();
-  }
+  video_writer_worker.join();
+
   return;
 }
 
@@ -641,7 +625,49 @@ void FrameGrabber::NextImpl() {
   }
 }
 
-const std::queue<std::unordered_map<IMV_HANDLE, IMV_Frame*>>&
-FrameGrabber::FramesQueue() const {
-  return frames_queue_;
+void FrameGrabber::VideoWriterWorker(const std::string& output_dir,
+                                     const double frame_rate) {
+  CreateDirIfNotExists(output_dir);
+
+  std::unordered_map<std::string, std::string> output_paths;
+  std::unordered_map<std::string, cv::VideoWriter> video_writers;
+
+  for (const std::string& serial_number : camera_list_) {
+    output_paths.insert(std::make_pair(
+        serial_number, JoinPaths(output_dir, serial_number + ".ts")));
+    cv::VideoWriter video_writer(output_paths.at(serial_number),
+                                 cv::VideoWriter::fourcc('M', 'P', 'E', 'G'),
+                                 frame_rate, cv::Size(2048, 1536));
+    video_writers.insert(std::make_pair(serial_number, video_writer));
+  }
+
+  while (true) {
+    bool new_frame = false;
+    // Check new frame.
+    {
+      std::unique_lock<std::mutex> lock(frames_queue_mutex_);
+      new_frame = !frames_queue_.empty();
+    }
+    if (new_frame) {
+      for (const std::string& serial_number : camera_list_) {
+        IMV_HANDLE dev_handle = device_handles_.at(serial_number);
+        cv::Mat frame =
+            FrameToCvMat(dev_handle, frames_queue_.front().at(dev_handle));
+        video_writers.at(serial_number) << frame;
+      }
+      frames_queue_.pop();
+    }
+    // Check finish.
+    bool finish = false;
+    {
+      std::unique_lock<std::mutex> lock(frames_queue_mutex_);
+      finish = grab_frames_finished_;
+    }
+    if (finish) {
+      break;
+    }
+  }
+  for (const std::string& serial_number : camera_list_) {
+    video_writers.at(serial_number).release();
+  }
 }

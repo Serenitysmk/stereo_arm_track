@@ -34,21 +34,23 @@ class FrameGrabber {
 
   bool TestGrabFrameOneCamera();
 
-  const std::queue<std::unordered_map<IMV_HANDLE, IMV_Frame*>>& FramesQueue()
-      const;
-
  private:
   // Display device info in the console.
   void PrintDeviceInfo(const IMV_DeviceList& devce_info_list);
 
+  // Set soft trigger configuration.
   int SetSoftTriggerConf(IMV_HANDLE dev_handle);
 
+  // Allocate memory for pixel format conversion buffer.
   int MallocConvertBuffer();
 
+  // Convert frame to OpenCV Mat.
   cv::Mat FrameToCvMat(IMV_HANDLE dev_handle, IMV_Frame* frame);
-  
+
+  // Pixel format conversion.
   void PixelFormatConversion(IMV_HANDLE dev_handle, IMV_Frame* frame);
 
+  // Send software trigger signals.
   void ExecuteTriggerSoft();
 
   // Initialize the cameras and start grabbing,
@@ -56,9 +58,12 @@ class FrameGrabber {
   // revices a trigger signal.
   bool InitCameras();
 
+  // Actual implementation of getting the next frame.
   void NextImpl();
 
-  
+  // Video writer worker.
+  void VideoWriterWorker(const std::string& output_dir,
+                         const double frame_rate);
 
   size_t num_cameras_;
   const std::vector<std::string> camera_list_;
@@ -70,6 +75,7 @@ class FrameGrabber {
 
   // Grabbed frames queue.
   std::queue<std::unordered_map<IMV_HANDLE, IMV_Frame*>> frames_queue_;
+  bool grab_frames_finished_ = false;
   std::mutex frames_queue_mutex_;
 };
 
