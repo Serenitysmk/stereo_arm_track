@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include <chrono>
 #include <queue>
 #include <unordered_map>
 
@@ -12,20 +13,9 @@ struct A {
 int main(int argc, char* argv[]) {
   std::cout << "Hello World" << std::endl;
 
-  A a;
-  for (int i = 0; i < 10; i++) {
-    std::string* str = new std::string(std::to_string(i) + " th frame");
-    g_test.emplace(i, str);
-    a.queue.push(g_test);
-    g_test.clear();
-  }
+  auto time = std::chrono::duration<double, std::ratio<60>>(0.5);
   
-  while(!a.queue.empty()){
-      std::unordered_map<int, std::string*> elm = a.queue.front();
-      a.queue.pop();
-      for(const auto& val: elm){
-          std::cout << val.first << " , " << *val.second << std::endl;
-      }
-  }
+  auto time_seconds = std::chrono::duration_cast<std::chrono::seconds>(time);
+  std::cout << time_seconds.count() << std::endl;
   return EXIT_SUCCESS;
 }

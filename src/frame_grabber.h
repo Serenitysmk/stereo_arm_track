@@ -26,7 +26,7 @@ class FrameGrabber {
   std::unordered_map<std::string, cv::Mat> Next();
 
   // Record videos for a period of time.
-  void Record(const std::string& output_dir, const std::chrono::minutes& time,
+  void Record(const std::string& output_dir, const std::chrono::duration<double, std::ratio<60>>& time,
               const double frame_rate, const bool display);
 
   // Close frame grabber.

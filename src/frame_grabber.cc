@@ -153,15 +153,17 @@ std::unordered_map<std::string, cv::Mat> FrameGrabber::Next() {
   return grabbed_frames;
 }
 
-void FrameGrabber::Record(const std::string& output_dir,
-                          const std::chrono::minutes& time,
-                          const double frame_rate, const bool display) {
+void FrameGrabber::Record(
+    const std::string& output_dir,
+    const std::chrono::duration<double, std::ratio<60>>& time,
+    const double frame_rate, const bool display) {
   // Start the video writer thread.
   std::thread video_writer_worker(&FrameGrabber::VideoWriterWorker, this,
                                   std::ref(output_dir), frame_rate);
 
   // Time interval in millisecond between the last frame and the current frame.
-  const double frame_interval = 1000.0 / frame_rate;
+  auto frame_interval =
+      std::chrono::duration<double, std::milli>(1000.0 / frame_rate);
 
   // Recording loop;
 
@@ -182,17 +184,15 @@ void FrameGrabber::Record(const std::string& output_dir,
     g_grabbed_frames.clear();
 
     auto grab_end = std::chrono::high_resolution_clock::now();
-    double grab_elapsed = static_cast<double>(
-        std::chrono::duration_cast<std::chrono::milliseconds>(grab_end -
-                                                              grab_start)
-            .count());
+    auto grab_elapsed =
+        std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(
+            grab_end - grab_start);
     std::cout << "Frames grabbed and pushed to the queue, grab ellapsed: "
-              << grab_elapsed << " ms , sleep for "
-              << int(frame_interval - grab_elapsed) << " ms" << std::endl;
+              << grab_elapsed.count() << " ms , sleep for "
+              << (frame_interval - grab_elapsed).count() << " ms" << std::endl;
 
     if (frame_interval > grab_elapsed) {
-      std::this_thread::sleep_for(
-          std::chrono::milliseconds(int(frame_interval - grab_elapsed)));
+      std::this_thread::sleep_for(frame_interval - grab_elapsed);
     }
   }
   end = std::chrono::high_resolution_clock::now();
@@ -201,11 +201,10 @@ void FrameGrabber::Record(const std::string& output_dir,
   std::cout << "Video recording stopped, time: " << recorded_time << " minutes"
             << std::endl;
 
-  std::cout << frames_queue_.size() << " frames recorded!" << std::endl;
-
   {
     std::unique_lock<std::mutex> lock(frames_queue_mutex_);
     grab_frames_finished_ = true;
+    std::cout << frames_queue_.size() << " frames recorded!" << std::endl;
   }
 
   video_writer_worker.join();
