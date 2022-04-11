@@ -3,7 +3,7 @@
     <ExtraInfo>
         <SDKVersion>V2.3.2.194984</SDKVersion>
         <SourceOfGeneration>MVViewer</SourceOfGeneration>
-        <TimeOfGeneration>2022-04-11 15:47:20</TimeOfGeneration>
+        <TimeOfGeneration>2022-04-11 15:51:16</TimeOfGeneration>
     </ExtraInfo>
     <MVViewer>
         <deviceCtrlVisibility>Guru</deviceCtrlVisibility>
@@ -105,7 +105,7 @@
             <ReverseY>0</ReverseY>
             <PixelFormat>17301513</PixelFormat>
             <TestImageSelector>0</TestImageSelector>
-            <AcquisitionMode>1</AcquisitionMode>
+            <AcquisitionMode>0</AcquisitionMode>
             <AcquisitionFrameCount>1</AcquisitionFrameCount>
             <AcquisitionFrameRate>25</AcquisitionFrameRate>
             <AcquisitionFrameRateEnable>0</AcquisitionFrameRateEnable>
@@ -161,7 +161,7 @@
                 <UserOutputValueAll>0</UserOutputValueAll>
             </selectingname>
             <GainSelector>0</GainSelector>
-            <GainRaw>4</GainRaw>
+            <GainRaw>3</GainRaw>
             <BlackLevelAuto>0</BlackLevelAuto>
             <BlackLevelSelector>0</BlackLevelSelector>
             <BlackLevel>60</BlackLevel>
@@ -221,10 +221,12 @@
             <TimerTriggerActivation>0</TimerTriggerActivation>
             <TimerDelay>1024</TimerDelay>
             <TimerDuration>4096</TimerDuration>
-            <SharpnessEnabled>0</SharpnessEnabled>
-            <DenoisingEnabled>0</DenoisingEnabled>
+            <SharpnessEnabled>1</SharpnessEnabled>
+            <Sharpness>50</Sharpness>
+            <DenoisingEnabled>1</DenoisingEnabled>
+            <Denoising>50</Denoising>
             <DigitalShift>0</DigitalShift>
-            <Brightness>80</Brightness>
+            <Brightness>60</Brightness>
         </Property>
         <DrawROI/>
     </device>

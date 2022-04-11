@@ -148,8 +148,7 @@ std::unordered_map<std::string, cv::Mat> FrameGrabber::Next() {
       return g_grabbed_frames.size() == camera_list_.size();
     });
   }
-  std::cout << "Execute finished" << std::endl;
-
+  
   for (const std::string& serial_number : camera_list_) {
     IMV_HANDLE dev_handle = device_handles_.at(serial_number);
 

@@ -3,7 +3,7 @@
     <ExtraInfo>
         <SDKVersion>V2.3.2.194984</SDKVersion>
         <SourceOfGeneration>MVViewer</SourceOfGeneration>
-        <TimeOfGeneration>2022-04-10 23:03:42</TimeOfGeneration>
+        <TimeOfGeneration>2022-04-11 15:55:25</TimeOfGeneration>
     </ExtraInfo>
     <MVViewer>
         <deviceCtrlVisibility>Guru</deviceCtrlVisibility>
@@ -82,10 +82,10 @@
     </MVViewer>
     <device>
         <DeviceInfo>
-            <DeviceKey>Huaray Technology:7L03E0EPAK00002</DeviceKey>
+            <DeviceKey>Huaray Technology:7L03E0EPAK00022</DeviceKey>
             <DeviceModelName>A7300CU90</DeviceModelName>
             <DeviceVersion>V1.000.00.0.R(20201013,133916)</DeviceVersion>
-            <guid>2E0317AB7BCC</guid>
+            <guid>2E0317AB8164</guid>
         </DeviceInfo>
         <Property>
             <DeviceScanType>0</DeviceScanType>
@@ -172,11 +172,11 @@
             </selectingname>
             <selectingname>
                 <BalanceRatioSelector>2</BalanceRatioSelector>
-                <BalanceRatio>3.46959</BalanceRatio>
+                <BalanceRatio>2.99368</BalanceRatio>
             </selectingname>
             <selectingname>
                 <BalanceRatioSelector>0</BalanceRatioSelector>
-                <BalanceRatio>1.36343</BalanceRatio>
+                <BalanceRatio>1.60299</BalanceRatio>
             </selectingname>
             <Gamma>0.45</Gamma>
             <LUTSelector>0</LUTSelector>
@@ -226,7 +226,7 @@
             <DenoisingEnabled>1</DenoisingEnabled>
             <Denoising>50</Denoising>
             <DigitalShift>0</DigitalShift>
-            <Brightness>80</Brightness>
+            <Brightness>60</Brightness>
         </Property>
         <DrawROI/>
     </device>
