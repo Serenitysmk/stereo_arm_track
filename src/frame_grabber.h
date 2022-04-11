@@ -50,6 +50,8 @@ class FrameGrabber {
   // revices a trigger signal.
   bool InitCameras();
 
+  void NextImpl();
+
   size_t num_cameras_;
   const std::vector<std::string> camera_list_;
 
@@ -59,8 +61,9 @@ class FrameGrabber {
   std::unordered_map<IMV_HANDLE, unsigned char*> convert_buffers;
 
   // Grabbed frames queue.
-  std::queue<std::unordered_map<std::string, cv::Mat>> frames_queue_;
+  std::queue<std::unordered_map<std::string, IMV_Frame*>> frames_queue_;
   std::mutex frames_queue_mutex_;
+
 };
 
 #endif  // STEREO_ARM_TRACK_FRAME_GRABBER_H_

@@ -137,18 +137,9 @@ bool FrameGrabber::Init() {
 }
 
 std::unordered_map<std::string, cv::Mat> FrameGrabber::Next() {
-  int ret = IMV_OK;
   std::unordered_map<std::string, cv::Mat> grabbed_frames;
 
-  // Execute all triggers.
-  ExecuteTriggerSoft();
-
-  {
-    std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
-    g_grab_finish_condition.wait(lock, [this] {
-      return g_grabbed_frames.size() == camera_list_.size();
-    });
-  }
+  NextImpl();
 
   for (const std::string& serial_number : camera_list_) {
     IMV_HANDLE dev_handle = device_handles_.at(serial_number);
@@ -156,10 +147,9 @@ std::unordered_map<std::string, cv::Mat> FrameGrabber::Next() {
     PixelFormatConversion(dev_handle, g_grabbed_frames.at(dev_handle));
     cv::Size size(g_grabbed_frames.at(dev_handle)->frameInfo.width,
                   g_grabbed_frames.at(dev_handle)->frameInfo.height);
-    grabbed_frames.insert(std::make_pair(
+    grabbed_frames.emplace(
         serial_number,
-        cv::Mat(size, CV_8UC3,
-                (uchar*)g_grabbed_frames.at(dev_handle)->pData)));
+        cv::Mat(size, CV_8UC3, (uchar*)g_grabbed_frames.at(dev_handle)->pData));
   }
 
   g_grabbed_frames.clear();
@@ -193,13 +183,14 @@ void FrameGrabber::Record(const std::string& output_dir,
 
   while (std::chrono::high_resolution_clock::now() < end) {
     auto grab_start = std::chrono::high_resolution_clock::now();
-    std::unordered_map<std::string, cv::Mat> frames = Next();
+
+    NextImpl();  
 
     // Push to the frames queue.
-    {
-      std::unique_lock<std::mutex> lock(frames_queue_mutex_);
-      frames_queue_.push(frames);
-    }
+    // {
+    //   std::unique_lock<std::mutex> lock(frames_queue_mutex_);
+    //   frames_queue_.push(frames);
+    // }
 
     auto grab_end = std::chrono::high_resolution_clock::now();
     double grab_elapsed = static_cast<double>(
@@ -607,4 +598,20 @@ bool FrameGrabber::InitCameras() {
     }
   }
   return true;
+}
+
+void FrameGrabber::NextImpl() {
+  int ret = IMV_OK;
+  std::unordered_map<std::string, IMV_Frame*> grabbed_frames;
+
+  // Execute all triggers.
+  ExecuteTriggerSoft();
+
+  // Wait for the frame grabbing process.
+  {
+    std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
+    g_grab_finish_condition.wait(lock, [this] {
+      return g_grabbed_frames.size() == camera_list_.size();
+    });
+  }
 }
