@@ -195,7 +195,7 @@ void FrameGrabber::Record(const std::string& output_dir,
                                                               grab_start)
             .count());
     std::cout << "Frames grabbed and pushed to the queue, grab ellapsed: "
-              << grab_elapsed << " ms" << std::endl;
+              << grab_elapsed << " ms , sleep for " << int(frame_interval - grab_elapsed) << " ms" << std::endl;
     if(frame_interval > grab_elapsed){
       std::this_thread::sleep_for(std::chrono::milliseconds(int(frame_interval - grab_elapsed)));
     }
@@ -203,8 +203,10 @@ void FrameGrabber::Record(const std::string& output_dir,
   end = std::chrono::high_resolution_clock::now();
   recorded_time =
       std::chrono::duration_cast<std::chrono::minutes>(end - start).count();
-  std::cout << "Video recording stopped, time: " << recorded_time << "minutes"
+  std::cout << "Video recording stopped, time: " << recorded_time << " minutes"
             << std::endl;
+
+  std::cout << frames_queue_.size()  << " frames grabbed!" << std::endl;
 
   return;
 }
