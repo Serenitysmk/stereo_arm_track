@@ -164,6 +164,8 @@ void FrameGrabber::Record(
   PrintHeading1("Start video recording");
 
   double recorded_time = 0.0;
+  double report_time = 0.0;
+
   auto start = std::chrono::high_resolution_clock::now();
   auto end = std::chrono::high_resolution_clock::now() + time + frame_interval;
 
@@ -178,10 +180,14 @@ void FrameGrabber::Record(
     g_grabbed_frames.clear();
 
     auto current_time = std::chrono::high_resolution_clock::now();
-    recorded_time = std::chrono::duration_cast<std::chrono::seconds>(
+    
+    report_time = std::chrono::duration_cast<std::chrono::seconds>(
                         current_time - last_report_time)
                         .count();
-    if (recorded_time > 10.0) {
+    if (report_time >= 10.0) {
+      recorded_time = std::chrono::duration_cast<std::chrono::seconds>(
+                        current_time -start)
+                        .count();
       std::cout << "Recording for " << recorded_time << " seconds ..."
                 << std::endl;
       last_report_time = current_time;
