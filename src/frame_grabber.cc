@@ -170,9 +170,9 @@ void FrameGrabber::Record(
   
   double recorded_time = 0.0;
   auto start = std::chrono::high_resolution_clock::now();
-  auto end = std::chrono::high_resolution_clock::now() + time;
+  auto end = std::chrono::high_resolution_clock::now() + time + frame_interval;
 
-  while (std::chrono::high_resolution_clock::now() < end) {
+  while (std::chrono::high_resolution_clock::now() <= end) {
     auto grab_start = std::chrono::high_resolution_clock::now();
 
     NextImpl();
@@ -188,9 +188,6 @@ void FrameGrabber::Record(
     auto grab_elapsed =
         std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(
             grab_end - grab_start);
-    std::cout << "Frames grabbed and pushed to the queue, grab ellapsed: "
-              << grab_elapsed.count() << " ms , sleep for "
-              << (frame_interval - grab_elapsed).count() << " ms" << std::endl;
 
     if (frame_interval > grab_elapsed) {
       std::this_thread::sleep_for(frame_interval - grab_elapsed);
@@ -198,7 +195,7 @@ void FrameGrabber::Record(
   }
   end = std::chrono::high_resolution_clock::now();
   recorded_time =
-      std::chrono::duration_cast<std::chrono::minutes>(end - start).count();
+      std::chrono::duration_cast<std::chrono::duration<double, std::ratio<60>>>(end - start).count();
   std::cout << "Video recording stopped, time: " << recorded_time << " minutes"
             << std::endl;
 
