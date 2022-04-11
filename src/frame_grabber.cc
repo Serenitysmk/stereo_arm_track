@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include <opencv2/highgui.hpp>
+#include <opencv2/video.hpp>
 
 #include <util/misc.h>
 
@@ -148,7 +149,7 @@ std::unordered_map<std::string, cv::Mat> FrameGrabber::Next() {
       return g_grabbed_frames.size() == camera_list_.size();
     });
   }
-  
+
   for (const std::string& serial_number : camera_list_) {
     IMV_HANDLE dev_handle = device_handles_.at(serial_number);
 
@@ -169,15 +170,16 @@ std::unordered_map<std::string, cv::Mat> FrameGrabber::Next() {
 void FrameGrabber::Record(const std::string& output_dir,
                           const std::chrono::minutes& time,
                           const double frame_rate, const bool display) {
-  const size_t num_cameras = device_handles_.size();
-  std::vector<std::string> output_paths;
-  output_paths.reserve(num_cameras);
+  CreateDirIfNotExists(output_dir);
 
-  for (size_t camera_idx = 0; camera_idx < num_cameras; camera_idx) {
-    std::stringstream stream;
-    stream << output_dir << "/"
-           << "video_" << std::to_string(camera_idx) << ".ts";
-    output_paths.emplace_back(stream.str());
+  std::unordered_map<std::string, std::string> output_paths;
+  std::unordered_map<std::string, cv::VideoCapture> video_caps;
+
+  for (const std::string& serial_number : camera_list_) {
+    output_paths.insert(std::make_pair(
+        serial_number, JoinPaths(output_dir, serial_number + ".ts")));
+    video_caps.insert(std::make_pair(
+        serial_number, cv::VideoCapture(output_paths.at(serial_number))));
   }
 
   // Recording loop;
@@ -231,15 +233,15 @@ bool FrameGrabber::Close() {
                     << std::endl;
           return false;
         }
-
-        // Close camera.
-        ret = IMV_Close(dev_handle);
-        if (ret != IMV_OK) {
-          std::cerr << "ERROR: Close camera failed! Error code " << ret
-                    << std::endl;
-          return false;
-        }
       }
+      // Close camera.
+      ret = IMV_Close(dev_handle);
+      if (ret != IMV_OK) {
+        std::cerr << "ERROR: Close camera failed! Error code " << ret
+                  << std::endl;
+        return false;
+      }
+      std::cout << "Camera " << serial_number << " closed" << std::endl;
     }
   }
   return true;
@@ -565,6 +567,7 @@ bool FrameGrabber::InitCameras() {
                 << " failed! Error code " << ret << std::endl;
       return false;
     }
+
     std::cout << "Camera " << serial_number << " opened" << std::endl;
 
     // Set software trigger config.
@@ -585,7 +588,7 @@ bool FrameGrabber::InitCameras() {
                 << std::endl;
       return false;
     }
-    
+
     // Attach callback function.
     ret = IMV_AttachGrabbing(dev_handle, OnFrameGrabbed, (void*)dev_handle);
     if (ret != IMV_OK) {

@@ -59,7 +59,7 @@ class FrameGrabber {
   std::unordered_map<IMV_HANDLE, unsigned char*> convert_buffers;
 
   // Grabbed frames queue.
-  std::queue<std::vector<IMV_Frame*>> frames_queue_;
+  std::queue<std::unordered_map<std::string, cv::Mat>> frames_queue_;
   std::mutex frames_queue_mutex_;
 };
 
