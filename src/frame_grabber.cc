@@ -167,7 +167,7 @@ void FrameGrabber::Record(
 
   // Recording loop;
   PrintHeading2("Start video recording");
-  
+
   double recorded_time = 0.0;
   auto start = std::chrono::high_resolution_clock::now();
   auto end = std::chrono::high_resolution_clock::now() + time + frame_interval;
@@ -195,7 +195,9 @@ void FrameGrabber::Record(
   }
   end = std::chrono::high_resolution_clock::now();
   recorded_time =
-      std::chrono::duration_cast<std::chrono::duration<double, std::ratio<60>>>(end - start).count();
+      std::chrono::duration_cast<std::chrono::duration<double, std::ratio<60>>>(
+          end - start)
+          .count();
   std::cout << "Video recording stopped, time: " << recorded_time << " minutes"
             << std::endl;
 
@@ -632,9 +634,18 @@ void FrameGrabber::VideoWriterWorker(const std::string& output_dir,
   for (const std::string& serial_number : camera_list_) {
     output_paths.insert(std::make_pair(
         serial_number, JoinPaths(output_dir, serial_number + ".ts")));
+    int64_t width = 0;
+    int64_t height = 0;
+
+    IMV_GetIntFeatureValue(device_handles_.at(serial_number), "Width", &width);
+
+    IMV_GetIntFeatureValue(device_handles_.at(serial_number), "Height",
+                           &height);
+
     cv::VideoWriter video_writer(output_paths.at(serial_number),
                                  cv::VideoWriter::fourcc('M', 'P', 'E', 'G'),
-                                 frame_rate, cv::Size(2048, 1536));
+                                 frame_rate, cv::Size(width, height));
+
     video_writers.insert(std::make_pair(serial_number, video_writer));
   }
 
