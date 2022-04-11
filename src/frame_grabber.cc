@@ -143,13 +143,9 @@ std::unordered_map<std::string, cv::Mat> FrameGrabber::Next() {
 
   for (const std::string& serial_number : camera_list_) {
     IMV_HANDLE dev_handle = device_handles_.at(serial_number);
-
-    PixelFormatConversion(dev_handle, g_grabbed_frames.at(dev_handle));
-    cv::Size size(g_grabbed_frames.at(dev_handle)->frameInfo.width,
-                  g_grabbed_frames.at(dev_handle)->frameInfo.height);
     grabbed_frames.emplace(
         serial_number,
-        cv::Mat(size, CV_8UC3, (uchar*)g_grabbed_frames.at(dev_handle)->pData));
+        FrameToCvMat(dev_handle, g_grabbed_frames.at(dev_handle)));
   }
 
   g_grabbed_frames.clear();
@@ -184,13 +180,15 @@ void FrameGrabber::Record(const std::string& output_dir,
   while (std::chrono::high_resolution_clock::now() < end) {
     auto grab_start = std::chrono::high_resolution_clock::now();
 
-    NextImpl();  
+    NextImpl();
 
     // Push to the frames queue.
-    // {
-    //   std::unique_lock<std::mutex> lock(frames_queue_mutex_);
-    //   frames_queue_.push(frames);
-    // }
+    {
+      std::unique_lock<std::mutex> lock(frames_queue_mutex_);
+      frames_queue_.push(g_grabbed_frames);
+    }
+
+    g_grabbed_frames.clear();
 
     auto grab_end = std::chrono::high_resolution_clock::now();
     double grab_elapsed = static_cast<double>(
@@ -501,6 +499,13 @@ int FrameGrabber::MallocConvertBuffer() {
   return IMV_OK;
 }
 
+cv::Mat FrameGrabber::FrameToCvMat(IMV_HANDLE dev_handle, IMV_Frame* frame) {
+  PixelFormatConversion(dev_handle, frame);
+
+  cv::Size size(frame->frameInfo.width, frame->frameInfo.height);
+  return cv::Mat(size, CV_8UC3, (uchar*)frame->pData);
+}
+
 void FrameGrabber::PixelFormatConversion(IMV_HANDLE dev_handle,
                                          IMV_Frame* frame) {
   int ret = IMV_OK;
@@ -602,7 +607,6 @@ bool FrameGrabber::InitCameras() {
 
 void FrameGrabber::NextImpl() {
   int ret = IMV_OK;
-  std::unordered_map<std::string, IMV_Frame*> grabbed_frames;
 
   // Execute all triggers.
   ExecuteTriggerSoft();
@@ -614,4 +618,9 @@ void FrameGrabber::NextImpl() {
       return g_grabbed_frames.size() == camera_list_.size();
     });
   }
+}
+
+const std::queue<std::unordered_map<IMV_HANDLE, IMV_Frame*>>&
+FrameGrabber::FramesQueue() const {
+  return frames_queue_;
 }

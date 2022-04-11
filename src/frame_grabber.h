@@ -12,7 +12,8 @@
 
 class FrameGrabber {
  public:
-  FrameGrabber(const size_t num_cameras, const std::vector<std::string>& camera_list);
+  FrameGrabber(const size_t num_cameras,
+               const std::vector<std::string>& camera_list);
 
   ~FrameGrabber();
 
@@ -33,6 +34,9 @@ class FrameGrabber {
 
   bool TestGrabFrameOneCamera();
 
+  const std::queue<std::unordered_map<IMV_HANDLE, IMV_Frame*>>& FramesQueue()
+      const;
+
  private:
   // Display device info in the console.
   void PrintDeviceInfo(const IMV_DeviceList& devce_info_list);
@@ -41,6 +45,8 @@ class FrameGrabber {
 
   int MallocConvertBuffer();
 
+  cv::Mat FrameToCvMat(IMV_HANDLE dev_handle, IMV_Frame* frame);
+  
   void PixelFormatConversion(IMV_HANDLE dev_handle, IMV_Frame* frame);
 
   void ExecuteTriggerSoft();
@@ -52,6 +58,8 @@ class FrameGrabber {
 
   void NextImpl();
 
+  
+
   size_t num_cameras_;
   const std::vector<std::string> camera_list_;
 
@@ -61,9 +69,8 @@ class FrameGrabber {
   std::unordered_map<IMV_HANDLE, unsigned char*> convert_buffers;
 
   // Grabbed frames queue.
-  std::queue<std::unordered_map<std::string, IMV_Frame*>> frames_queue_;
+  std::queue<std::unordered_map<IMV_HANDLE, IMV_Frame*>> frames_queue_;
   std::mutex frames_queue_mutex_;
-
 };
 
 #endif  // STEREO_ARM_TRACK_FRAME_GRABBER_H_
