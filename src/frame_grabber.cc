@@ -172,6 +172,7 @@ void FrameGrabber::Record(
   auto start = std::chrono::high_resolution_clock::now();
   auto end = std::chrono::high_resolution_clock::now() + time + frame_interval;
 
+  size_t cnt = 0;
   while (std::chrono::high_resolution_clock::now() <= end) {
     auto grab_start = std::chrono::high_resolution_clock::now();
 
@@ -185,6 +186,8 @@ void FrameGrabber::Record(
     g_grabbed_frames.clear();
 
     auto grab_end = std::chrono::high_resolution_clock::now();
+    cnt++;
+
     auto grab_elapsed =
         std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(
             grab_end - grab_start);
@@ -198,7 +201,7 @@ void FrameGrabber::Record(
       std::chrono::duration_cast<std::chrono::duration<double, std::ratio<60>>>(
           end - start)
           .count();
-  std::cout << "Video recording stopped, time: " << recorded_time << " minutes"
+  std::cout << "Video recording stopped, time: " << recorded_time << " minutes" << "  cnt: " << cnt
             << std::endl;
 
   {
