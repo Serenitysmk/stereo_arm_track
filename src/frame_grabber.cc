@@ -159,13 +159,15 @@ void FrameGrabber::Record(const std::string& output_dir,
   CreateDirIfNotExists(output_dir);
 
   std::unordered_map<std::string, std::string> output_paths;
-  std::unordered_map<std::string, cv::VideoCapture> video_caps;
+  std::unordered_map<std::string, cv::VideoWriter> video_writers;
 
   for (const std::string& serial_number : camera_list_) {
     output_paths.insert(std::make_pair(
         serial_number, JoinPaths(output_dir, serial_number + ".ts")));
-    video_caps.insert(std::make_pair(
-        serial_number, cv::VideoCapture(output_paths.at(serial_number))));
+    cv::VideoWriter video_writer(output_paths.at(serial_number),
+                                 cv::VideoWriter::fourcc('M', 'P', 'E', 'G'),
+                                 frame_rate, cv::Size(2048, 1536));
+    video_writers.insert(std::make_pair(serial_number, video_writer));
   }
 
   // Time interval in millisecond between the last frame and the current frame.
@@ -195,9 +197,12 @@ void FrameGrabber::Record(const std::string& output_dir,
                                                               grab_start)
             .count());
     std::cout << "Frames grabbed and pushed to the queue, grab ellapsed: "
-              << grab_elapsed << " ms , sleep for " << int(frame_interval - grab_elapsed) << " ms" << std::endl;
-    if(frame_interval > grab_elapsed){
-      std::this_thread::sleep_for(std::chrono::milliseconds(int(frame_interval - grab_elapsed)));
+              << grab_elapsed << " ms , sleep for "
+              << int(frame_interval - grab_elapsed) << " ms" << std::endl;
+
+    if (frame_interval > grab_elapsed) {
+      std::this_thread::sleep_for(
+          std::chrono::milliseconds(int(frame_interval - grab_elapsed)));
     }
   }
   end = std::chrono::high_resolution_clock::now();
@@ -206,8 +211,21 @@ void FrameGrabber::Record(const std::string& output_dir,
   std::cout << "Video recording stopped, time: " << recorded_time << " minutes"
             << std::endl;
 
-  std::cout << frames_queue_.size()  << " frames grabbed!" << std::endl;
+  std::cout << frames_queue_.size() << " frames grabbed!" << std::endl;
 
+  while (!frames_queue_.empty()) {
+    for (const std::string& serial_number : camera_list_) {
+      IMV_HANDLE dev_handle = device_handles_.at(serial_number);
+      cv::Mat frame =
+          FrameToCvMat(dev_handle, frames_queue_.front().at(dev_handle));
+      video_writers.at(serial_number) << frame;
+    }
+    frames_queue_.pop();
+  }
+
+  for (const std::string& serial_number : camera_list_) {
+    video_writers.at(serial_number).release();
+  }
   return;
 }
 
