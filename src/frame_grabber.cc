@@ -649,11 +649,15 @@ void FrameGrabber::VideoWriterWorker(const std::string& output_dir,
       new_frame = !frames_queue_.empty();
     }
     if (new_frame) {
-      for (const std::string& serial_number : camera_list_) {
-        IMV_HANDLE dev_handle = device_handles_.at(serial_number);
-        cv::Mat frame =
-            FrameToCvMat(dev_handle, frames_queue_.front().at(dev_handle));
-        video_writers.at(serial_number) << frame;
+      {
+        std::unique_lock<std::mutex> lock(frames_queue_mutex_);
+
+        for (const std::string& serial_number : camera_list_) {
+          IMV_HANDLE dev_handle = device_handles_.at(serial_number);
+          cv::Mat frame =
+              FrameToCvMat(dev_handle, frames_queue_.front().at(dev_handle));
+          video_writers.at(serial_number) << frame;
+        }
       }
       frames_queue_.pop();
     }
