@@ -32,7 +32,11 @@ int main(int argc, char** argv) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   google::InitGoogleLogging(argv[0]);
 
-  RunTestFrameGrabber();
+  if (FLAGS_record) {
+    RunTestVideoRecord();
+  } else {
+    RunTestFrameGrabber();
+  }
 
   return EXIT_SUCCESS;
 }
