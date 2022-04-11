@@ -182,6 +182,9 @@ void FrameGrabber::Record(const std::string& output_dir,
         serial_number, cv::VideoCapture(output_paths.at(serial_number))));
   }
 
+  // Time interval in millisecond between the last frame and the current frame.
+  const double frame_interval = 1000.0 / frame_rate;
+
   // Recording loop;
 
   double recorded_time = 0.0;
@@ -189,6 +192,7 @@ void FrameGrabber::Record(const std::string& output_dir,
   auto end = std::chrono::high_resolution_clock::now() + time;
 
   while (std::chrono::high_resolution_clock::now() < end) {
+    auto grab_start = std::chrono::high_resolution_clock::now();
     std::unordered_map<std::string, cv::Mat> frames = Next();
 
     // Push to the frames queue.
@@ -197,7 +201,13 @@ void FrameGrabber::Record(const std::string& output_dir,
       frames_queue_.push(frames);
     }
 
-    std::cout << "Frames grabbed and pushed to the queue" << std::endl;
+    auto grab_end = std::chrono::high_resolution_clock::now();
+    double grab_elapsed = static_cast<double>(
+        std::chrono::duration_cast<std::chrono::milliseconds>(grab_end -
+                                                              grab_start)
+            .count());
+    std::cout << "Frames grabbed and pushed to the queue, grab ellapsed: "
+              << grab_elapsed << " ms" << std::endl;
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
   end = std::chrono::high_resolution_clock::now();
