@@ -184,36 +184,28 @@ void FrameGrabber::Record(const std::string& output_dir,
 
   // Recording loop;
 
-  // double recorded_time = 0.0;
-  // auto start = std::chrono::high_resolution_clock::now();
-  // auto end = std::chrono::high_resolution_clock::now() + time;
+  double recorded_time = 0.0;
+  auto start = std::chrono::high_resolution_clock::now();
+  auto end = std::chrono::high_resolution_clock::now() + time;
 
-  // while (std::chrono::high_resolution_clock::now() < end) {
-  //   ExecuteTriggerSoft();
+  while (std::chrono::high_resolution_clock::now() < end) {
+    std::unordered_map<std::string, cv::Mat> frames = Next();
 
-  //   std::vector<IMV_Frame*> frames;
-  //   frames.reserve(device_handles_.size());
-  //   // Push to the frames queue.
-  //   for (IMV_HANDLE dev_handle : device_handles_) {
-  //     {
-  //       std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
-  //       frames.emplace_back(g_grabbed_frames[dev_handle]);
-  //     }
-  //   }
-  //   {
-  //     std::unique_lock<std::mutex> lock(frames_queue_mutex_);
-  //     frames_queue_.push(frames);
-  //   }
+    // Push to the frames queue.
+    {
+      std::unique_lock<std::mutex> lock(frames_queue_mutex_);
+      frames_queue_.push(frames);
+    }
 
-  //   std::cout << "Frames grabbed and pushed to the queue" << std::endl;
-  //   std::this_thread::sleep_for(std::chrono::seconds(1));
-  // }
-  // end = std::chrono::high_resolution_clock::now();
-  // recorded_time =
-  //     std::chrono::duration_cast<std::chrono::minutes>(end - start).count();
-  // std::cout << "Video recording stopped, time: " << recorded_time << "
-  // minutes"
-  //           << std::endl;
+    std::cout << "Frames grabbed and pushed to the queue" << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+  }
+  end = std::chrono::high_resolution_clock::now();
+  recorded_time =
+      std::chrono::duration_cast<std::chrono::minutes>(end - start).count();
+  std::cout << "Video recording stopped, time: " << recorded_time << "minutes"
+            << std::endl;
+
   return;
 }
 
