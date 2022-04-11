@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
       break;
     }
     cv::Mat img1, img2;
-
+    
     cv::imshow("frame1", frame1);
     cv::imshow("frame2", frame2);
     cv::waitKey(0);

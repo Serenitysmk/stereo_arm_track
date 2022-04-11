@@ -167,6 +167,7 @@ void FrameGrabber::Record(
   auto start = std::chrono::high_resolution_clock::now();
   auto end = std::chrono::high_resolution_clock::now() + time + frame_interval;
 
+  auto last_report_time = start;
   while (std::chrono::high_resolution_clock::now() <= end) {
     auto grab_start = std::chrono::high_resolution_clock::now();
 
@@ -177,11 +178,14 @@ void FrameGrabber::Record(
     g_grabbed_frames.clear();
 
     auto current_time = std::chrono::high_resolution_clock::now();
-    recorded_time =
-        std::chrono::duration_cast<std::chrono::seconds>(current_time - start)
-            .count();
-    std::cout << "Recording for " << recorded_time << " seconds ..."
-              << std::endl;
+    recorded_time = std::chrono::duration_cast<std::chrono::seconds>(
+                        current_time - last_report_time)
+                        .count();
+    if (recorded_time > 10.0) {
+      std::cout << "Recording for " << recorded_time << " seconds ..."
+                << std::endl;
+      last_report_time = current_time;
+    }
 
     auto grab_end = std::chrono::high_resolution_clock::now();
 
