@@ -20,7 +20,7 @@ DEFINE_string(
     camera_list,
     "7L03E0EPAK00002, 7L03E0EPAK00005, 7L03E0EPAK00022, 7L03E0EPAK00026",
     "Used camera serial numbers");
-DEFINE_bool(record, true, "Is recording?");
+DEFINE_bool(record, false, "Is recording?");
 DEFINE_string(output_video_path, "../data/videos",
               "Output path of the recorded videos");
 
@@ -46,6 +46,8 @@ int main(int argc, char** argv) {
 ////////////////////////////////////////////////////////////////////////////////
 
 void RunTestFrameGrabber() {
+  std::cout << "Testing grabbing one frame" << std::endl;
+
   FrameGrabber grabber(FLAGS_num_cameras,
                        CSVToVector<std::string>(FLAGS_camera_list));
 
@@ -79,6 +81,8 @@ void RunTestFrameGrabber() {
 }
 
 void RunTestVideoRecord() {
+  std::cout << "Testing recording videos" << std::endl;
+
   FrameGrabber grabber(FLAGS_num_cameras,
                        CSVToVector<std::string>(FLAGS_camera_list));
 
