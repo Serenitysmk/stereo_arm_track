@@ -166,7 +166,8 @@ void FrameGrabber::Record(
       std::chrono::duration<double, std::milli>(1000.0 / frame_rate);
 
   // Recording loop;
-
+  PrintHeading2("Start video recording");
+  
   double recorded_time = 0.0;
   auto start = std::chrono::high_resolution_clock::now();
   auto end = std::chrono::high_resolution_clock::now() + time;
