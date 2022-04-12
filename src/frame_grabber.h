@@ -49,7 +49,7 @@ class FrameGrabber {
   cv::Mat FrameToCvMat(IMV_HANDLE dev_handle, IMV_Frame* frame);
 
   // Pixel format conversion.
-  void PixelFormatConversion(IMV_HANDLE dev_handle, IMV_Frame* frame);
+  void PixelFormatConversion(IMV_HANDLE dev_handle, IMV_Frame* frame, unsigned char* target_data);
 
   // Send software trigger signals.
   void ExecuteTriggerSoft();

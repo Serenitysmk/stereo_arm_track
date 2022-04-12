@@ -513,7 +513,7 @@ cv::Mat FrameGrabber::FrameToCvMat(IMV_HANDLE dev_handle, IMV_Frame* frame) {
 }
 
 void FrameGrabber::PixelFormatConversion(IMV_HANDLE dev_handle,
-                                         IMV_Frame* frame) {
+                                         IMV_Frame* frame, unsigned char* target_data) {
   int ret = IMV_OK;
   IMV_PixelConvertParam pixel_convert_params;
 
@@ -530,7 +530,7 @@ void FrameGrabber::PixelFormatConversion(IMV_HANDLE dev_handle,
     pixel_convert_params.eBayerDemosaic = demosaicNearestNeighbor;
     pixel_convert_params.eDstPixelFormat = gvspPixelBGR8;
 
-    pixel_convert_params.pDstBuf = convert_buffers.at(dev_handle);
+    pixel_convert_params.pDstBuf = target_data;
 
     pixel_convert_params.nDstBufSize =
         frame->frameInfo.width * frame->frameInfo.height * 3;
@@ -540,7 +540,7 @@ void FrameGrabber::PixelFormatConversion(IMV_HANDLE dev_handle,
       std::cerr << "ERROR: Image convert to BGR failed! Error code " << ret
                 << std::endl;
     }
-    frame->pData = convert_buffers.at(dev_handle);
+    frame->pData = target_data;
     frame->frameInfo.pixelFormat = gvspPixelBGR8;
   }
 }
