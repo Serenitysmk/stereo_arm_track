@@ -84,7 +84,7 @@ void RunTestVideoRecord() {
   std::cout << "Testing recording videos" << std::endl;
 
   FrameGrabber grabber(FLAGS_num_cameras,
-                       CSVToVector<std::string>(FLAGS_camera_list));
+                       CSVToVector<std::string>(FLAGS_camera_list), true);
 
   if (!grabber.Init()) {
     std::cerr << "ERROR: Failed to initialize the frame grabber!" << std::endl;

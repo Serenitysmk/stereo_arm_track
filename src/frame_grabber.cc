@@ -38,11 +38,39 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
   return;
 }
 
+void OnFrameGrabbedAndRecord(IMV_Frame* p_frame, void* p_user) {
+  if (p_frame == nullptr) {
+    std::cout << "WARNING: Frame pointer is NULL" << std::endl;
+    return;
+  }
+
+  IMV_HANDLE dev_handle = (IMV_HANDLE)p_user;
+
+  IMV_RecordFrameInfoParam record_frame_param;
+
+  record_frame_param.pData = p_frame->pData;
+  record_frame_param.nDataLen = p_frame->frameInfo.size;
+  record_frame_param.nPaddingX = p_frame->frameInfo.paddingX;
+  record_frame_param.nPaddingY = p_frame->frameInfo.paddingY;
+  record_frame_param.ePixelFormat = p_frame->frameInfo.pixelFormat;
+
+  // Record one frame.
+  IMV_InputOneFrame(dev_handle, &record_frame_param);
+  {
+    std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
+    g_grab_finish_condition.notify_one();
+  }
+  return;
+}
+
 }  // namespace
 
 FrameGrabber::FrameGrabber(const size_t num_cameras,
-                           const std::vector<std::string>& camera_list)
-    : num_cameras_(num_cameras), camera_list_(camera_list) {
+                           const std::vector<std::string>& camera_list,
+                           const bool record_mode)
+    : num_cameras_(num_cameras),
+      camera_list_(camera_list),
+      record_mode_(record_mode) {
   CHECK_GT(camera_list_.size(), 0);
 }
 
@@ -127,6 +155,12 @@ void FrameGrabber::Record(
     const std::string& output_dir,
     const std::chrono::duration<double, std::ratio<60>>& time,
     const double frame_rate) {
+  if (!record_mode_) {
+    std::cerr << "ERROR: Frame grabber is not set to be record mode!"
+              << std::endl;
+    return;
+  }
+
   // Time interval in millisecond between the last frame and the current frame.
   auto frame_interval =
       std::chrono::duration<double, std::milli>(1000.0 / frame_rate);
@@ -162,6 +196,13 @@ void FrameGrabber::Record(
   for (const std::string& serial_number : camera_list_) {
     IMV_HANDLE dev_handle = device_handles_.at(serial_number);
     int ret = IMV_OK;
+    ret = IMV_AttachGrabbing(dev_handle, OnFrameGrabbedAndRecord,
+                             (void*)dev_handle);
+    if (ret != IMV_OK) {
+      std::cerr << "ERROR: Attach grabbing failed! Error code " << ret
+                << std::endl;
+      return;
+    }
     ret = IMV_OpenRecord(dev_handle, &record_params.at(dev_handle));
     if (ret != IMV_OK) {
       std::cerr << "ERROR: Open record failed! Error code " << ret << std::endl;
@@ -183,20 +224,20 @@ void FrameGrabber::Record(
 
     NextImpl();
 
-    for (const std::string& serial_number : camera_list_) {
-      IMV_HANDLE dev_handle = device_handles_.at(serial_number);
-      IMV_RecordFrameInfoParam record_frame_param;
-      IMV_Frame* frame = g_grabbed_frames.at(dev_handle);
-      record_frame_param.pData = frame->pData;
-      record_frame_param.nDataLen = frame->frameInfo.size;
-      record_frame_param.nPaddingX = frame->frameInfo.paddingX;
-      record_frame_param.nPaddingY = frame->frameInfo.paddingY;
-      record_frame_param.ePixelFormat = frame->frameInfo.pixelFormat;
+    // for (const std::string& serial_number : camera_list_) {
+    //   IMV_HANDLE dev_handle = device_handles_.at(serial_number);
+    //   IMV_RecordFrameInfoParam record_frame_param;
+    //   IMV_Frame* frame = g_grabbed_frames.at(dev_handle);
+    //   record_frame_param.pData = frame->pData;
+    //   record_frame_param.nDataLen = frame->frameInfo.size;
+    //   record_frame_param.nPaddingX = frame->frameInfo.paddingX;
+    //   record_frame_param.nPaddingY = frame->frameInfo.paddingY;
+    //   record_frame_param.ePixelFormat = frame->frameInfo.pixelFormat;
 
-      // Record one frame.
-      IMV_InputOneFrame(dev_handle, &record_frame_param);
-    }
-    g_grabbed_frames.clear();
+    //   // Record one frame.
+    //   IMV_InputOneFrame(dev_handle, &record_frame_param);
+    // }
+    // g_grabbed_frames.clear();
     auto current_time = std::chrono::high_resolution_clock::now();
     report_time = std::chrono::duration_cast<std::chrono::seconds>(
                       current_time - last_report_time)
@@ -460,12 +501,12 @@ bool FrameGrabber::InitCameras() {
     }
 
     // Attach callback function.
-    ret = IMV_AttachGrabbing(dev_handle, OnFrameGrabbed, (void*)dev_handle);
-    if (ret != IMV_OK) {
-      std::cerr << "ERROR: Attach grabbing failed! Error code " << ret
-                << std::endl;
-      return false;
-    }
+    // ret = IMV_AttachGrabbing(dev_handle, OnFrameGrabbed, (void*)dev_handle);
+    // if (ret != IMV_OK) {
+    //   std::cerr << "ERROR: Attach grabbing failed! Error code " << ret
+    //             << std::endl;
+    //   return false;
+    // }
 
     ret = IMV_StartGrabbing(dev_handle);
     if (ret != IMV_OK) {

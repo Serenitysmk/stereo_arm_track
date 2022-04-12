@@ -13,7 +13,8 @@
 class FrameGrabber {
  public:
   FrameGrabber(const size_t num_cameras,
-               const std::vector<std::string>& camera_list);
+               const std::vector<std::string>& camera_list,
+               const bool record_mode = false);
 
   ~FrameGrabber();
 
@@ -60,6 +61,7 @@ class FrameGrabber {
 
   size_t num_cameras_;
   const std::vector<std::string> camera_list_;
+  bool record_mode_;
 
   // Device handles.
   std::unordered_map<std::string, IMV_HANDLE> device_handles_;
