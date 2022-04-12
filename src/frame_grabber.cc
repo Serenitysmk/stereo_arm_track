@@ -173,9 +173,10 @@ void FrameGrabber::Record(
   PrintHeading1("Start video recording");
 
   double recorded_time = 0.0;
-  
+  double report_time = 0.0;
   auto start = std::chrono::high_resolution_clock::now();
   auto end = std::chrono::high_resolution_clock::now() + time;
+  auto last_report_time = start;
 
   while (std::chrono::high_resolution_clock::now() <= end) {
     auto grab_start = std::chrono::high_resolution_clock::now();
@@ -198,15 +199,26 @@ void FrameGrabber::Record(
       IMV_InputOneFrame(dev_handle, &record_frame_param);
     }
     g_grabbed_frames.clear();
-
     auto current_time = std::chrono::high_resolution_clock::now();
+    report_time = std::chrono::duration_cast<std::chrono::seconds>(
+                      current_time - last_report_time)
+                      .count();
+    if (report_time >= 10) {
+      std::cout << "Recorded "
+                << std::chrono::duration_cast<std::chrono::seconds>(
+                       current_time - start)
+                       .count()
+                << " seconds ..." << std::endl;
+    }
 
     auto grab_end = std::chrono::high_resolution_clock::now();
 
     auto grab_elapsed =
         std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(
             grab_end - grab_start);
-    std::cout << "Frame grabbed elapsed: " << grab_elapsed.count() << " ms" << std::endl;
+
+    std::cout << "Grab elapsed: " << grab_elapsed.count() << " ms" << std::endl;
+
     if (frame_interval > grab_elapsed) {
       std::this_thread::sleep_for(frame_interval - grab_elapsed);
     }
