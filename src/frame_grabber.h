@@ -13,8 +13,7 @@
 class FrameGrabber {
  public:
   FrameGrabber(const size_t num_cameras,
-               const std::vector<std::string>& camera_list,
-               const bool record_mode = false);
+               const std::vector<std::string>& camera_list);
 
   ~FrameGrabber();
 
@@ -41,13 +40,6 @@ class FrameGrabber {
   // Set soft trigger configuration.
   int SetSoftTriggerConf(IMV_HANDLE dev_handle);
 
-  // Convert frame to OpenCV Mat.
-  cv::Mat FrameToCvMat(IMV_HANDLE dev_handle, IMV_Frame* frame);
-
-  // Pixel format conversion.
-  void PixelFormatConversion(IMV_HANDLE dev_handle, IMV_Frame* frame,
-                             cv::Mat* frame_cv);
-
   // Send software trigger signals.
   void ExecuteTriggerSoft();
 
@@ -61,7 +53,6 @@ class FrameGrabber {
 
   size_t num_cameras_;
   const std::vector<std::string> camera_list_;
-  bool record_mode_;
 
   // Device handles.
   std::unordered_map<std::string, IMV_HANDLE> device_handles_;

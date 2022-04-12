@@ -13,13 +13,55 @@ using namespace colmap;
 namespace {
 
 // Grabbed frames.
-std::unordered_map<IMV_HANDLE, IMV_Frame*> g_grabbed_frames;
+std::unordered_map<IMV_HANDLE, cv::Mat> g_grabbed_frames;
+
+// Whether the grab is finished.
+int g_grab_finished = 0;
 
 // Mutex to protect the grabbed frames.
 std::mutex g_grab_frame_mutex;
 
 // Condition variable for the main thread to wait for the frames to be grabbed.
 std::condition_variable g_grab_finish_condition;
+
+// Pixel format conversion.
+void PixelFormatConversion(IMV_HANDLE dev_handle, IMV_Frame* frame,
+                           cv::Mat* frame_cv) {
+  int ret = IMV_OK;
+  IMV_PixelConvertParam pixel_convert_params;
+
+  // mono8 and BGR8 raw data does not to be converted.
+  if ((frame->frameInfo.pixelFormat != gvspPixelMono8) &&
+      (frame->frameInfo.pixelFormat != gvspPixelBGR8)) {
+    pixel_convert_params.nWidth = frame->frameInfo.width;
+    pixel_convert_params.nHeight = frame->frameInfo.height;
+    pixel_convert_params.ePixelFormat = frame->frameInfo.pixelFormat;
+    pixel_convert_params.pSrcData = frame->pData;
+    pixel_convert_params.nSrcDataLen = frame->frameInfo.size;
+    pixel_convert_params.nPaddingX = frame->frameInfo.paddingX;
+    pixel_convert_params.nPaddingY = frame->frameInfo.paddingY;
+    pixel_convert_params.eBayerDemosaic = demosaicNearestNeighbor;
+    pixel_convert_params.eDstPixelFormat = gvspPixelBGR8;
+
+    pixel_convert_params.pDstBuf = frame_cv->data;
+
+    pixel_convert_params.nDstBufSize =
+        frame->frameInfo.width * frame->frameInfo.height * 3;
+
+    ret = IMV_PixelConvert(dev_handle, &pixel_convert_params);
+    if (ret != IMV_OK) {
+      std::cerr << "ERROR: Image convert to BGR failed! Error code " << ret
+                << std::endl;
+    }
+  }
+}
+
+cv::Mat FrameToCvMat(IMV_HANDLE dev_handle, IMV_Frame* frame) {
+  cv::Size size(frame->frameInfo.width, frame->frameInfo.height);
+  cv::Mat frame_cv = cv::Mat::zeros(size, CV_8UC3);
+  PixelFormatConversion(dev_handle, frame, &frame_cv);
+  return frame_cv;
+}
 
 // Data frame callback function.
 void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
@@ -29,10 +71,11 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
   }
 
   IMV_HANDLE dev_handle = (IMV_HANDLE)p_user;
-
+  cv::Mat frame_cv = FrameToCvMat(dev_handle, p_frame);
   {
     std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
-    g_grabbed_frames.emplace(dev_handle, p_frame);
+    g_grabbed_frames[dev_handle] = frame_cv;
+    g_grab_finished++;
     g_grab_finish_condition.notify_one();
   }
   return;
@@ -58,7 +101,7 @@ void OnFrameGrabbedAndRecord(IMV_Frame* p_frame, void* p_user) {
   IMV_InputOneFrame(dev_handle, &record_frame_param);
   {
     std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
-    g_grabbed_frames.emplace(dev_handle, p_frame);
+    g_grab_finished++;
     g_grab_finish_condition.notify_one();
   }
   return;
@@ -67,11 +110,8 @@ void OnFrameGrabbedAndRecord(IMV_Frame* p_frame, void* p_user) {
 }  // namespace
 
 FrameGrabber::FrameGrabber(const size_t num_cameras,
-                           const std::vector<std::string>& camera_list,
-                           const bool record_mode)
-    : num_cameras_(num_cameras),
-      camera_list_(camera_list),
-      record_mode_(record_mode) {
+                           const std::vector<std::string>& camera_list)
+    : num_cameras_(num_cameras), camera_list_(camera_list) {
   CHECK_GT(camera_list_.size(), 0);
 }
 
@@ -142,12 +182,8 @@ std::unordered_map<std::string, cv::Mat> FrameGrabber::Next() {
 
   for (const std::string& serial_number : camera_list_) {
     IMV_HANDLE dev_handle = device_handles_.at(serial_number);
-    grabbed_frames.emplace(
-        serial_number,
-        FrameToCvMat(dev_handle, g_grabbed_frames.at(dev_handle)));
+    grabbed_frames.emplace(serial_number, g_grabbed_frames.at(dev_handle));
   }
-
-  g_grabbed_frames.clear();
 
   return grabbed_frames;
 }
@@ -156,12 +192,6 @@ void FrameGrabber::Record(
     const std::string& output_dir,
     const std::chrono::duration<double, std::ratio<60>>& time,
     const double frame_rate) {
-  if (!record_mode_) {
-    std::cerr << "ERROR: Frame grabber is not set to be record mode!"
-              << std::endl;
-    return;
-  }
-
   // Time interval in millisecond between the last frame and the current frame.
   auto frame_interval =
       std::chrono::duration<double, std::milli>(1000.0 / frame_rate);
@@ -238,8 +268,7 @@ void FrameGrabber::Record(
     //   // Record one frame.
     //   IMV_InputOneFrame(dev_handle, &record_frame_param);
     // }
-    g_grabbed_frames.clear();
-    
+
     auto current_time = std::chrono::high_resolution_clock::now();
     report_time = std::chrono::duration_cast<std::chrono::seconds>(
                       current_time - last_report_time)
@@ -415,46 +444,6 @@ int FrameGrabber::SetSoftTriggerConf(IMV_HANDLE dev_handle) {
   return ret;
 }
 
-cv::Mat FrameGrabber::FrameToCvMat(IMV_HANDLE dev_handle, IMV_Frame* frame) {
-  // PixelFormatConversion(dev_handle, frame);
-
-  cv::Size size(frame->frameInfo.width, frame->frameInfo.height);
-  cv::Mat frame_cv = cv::Mat::zeros(size, CV_8UC3);
-  PixelFormatConversion(dev_handle, frame, &frame_cv);
-  return frame_cv;
-}
-
-void FrameGrabber::PixelFormatConversion(IMV_HANDLE dev_handle,
-                                         IMV_Frame* frame, cv::Mat* frame_cv) {
-  int ret = IMV_OK;
-  IMV_PixelConvertParam pixel_convert_params;
-
-  // mono8 and BGR8 raw data does not to be converted.
-  if ((frame->frameInfo.pixelFormat != gvspPixelMono8) &&
-      (frame->frameInfo.pixelFormat != gvspPixelBGR8)) {
-    pixel_convert_params.nWidth = frame->frameInfo.width;
-    pixel_convert_params.nHeight = frame->frameInfo.height;
-    pixel_convert_params.ePixelFormat = frame->frameInfo.pixelFormat;
-    pixel_convert_params.pSrcData = frame->pData;
-    pixel_convert_params.nSrcDataLen = frame->frameInfo.size;
-    pixel_convert_params.nPaddingX = frame->frameInfo.paddingX;
-    pixel_convert_params.nPaddingY = frame->frameInfo.paddingY;
-    pixel_convert_params.eBayerDemosaic = demosaicNearestNeighbor;
-    pixel_convert_params.eDstPixelFormat = gvspPixelBGR8;
-
-    pixel_convert_params.pDstBuf = frame_cv->data;
-
-    pixel_convert_params.nDstBufSize =
-        frame->frameInfo.width * frame->frameInfo.height * 3;
-
-    ret = IMV_PixelConvert(dev_handle, &pixel_convert_params);
-    if (ret != IMV_OK) {
-      std::cerr << "ERROR: Image convert to BGR failed! Error code " << ret
-                << std::endl;
-    }
-  }
-}
-
 void FrameGrabber::ExecuteTriggerSoft() {
   int ret = IMV_OK;
   for (const std::string& serial_number : camera_list_) {
@@ -510,7 +499,7 @@ bool FrameGrabber::InitCameras() {
     //   ret = IMV_AttachGrabbing(dev_handle, OnFrameGrabbed,
     //   (void*)dev_handle);
     // }
-    ret = IMV_AttachGrabbing(dev_handle, OnFrameGrabbed,(void*)dev_handle);
+    ret = IMV_AttachGrabbing(dev_handle, OnFrameGrabbed, (void*)dev_handle);
 
     if (ret != IMV_OK) {
       std::cerr << "ERROR: Attach grabbing failed! Error code " << ret
@@ -537,8 +526,8 @@ void FrameGrabber::NextImpl() {
   // Wait for the frame grabbing process.
   {
     std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
-    g_grab_finish_condition.wait(lock, [this] {
-      return g_grabbed_frames.size() == camera_list_.size();
-    });
+    g_grab_finish_condition.wait(
+        lock, [this] { return g_grab_finished == camera_list_.size(); });
   }
+  g_grab_finished = 0;
 }
