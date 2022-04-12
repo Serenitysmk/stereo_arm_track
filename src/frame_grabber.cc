@@ -143,7 +143,7 @@ std::unordered_map<std::string, cv::Mat> FrameGrabber::Next() {
 void FrameGrabber::Record(
     const std::string& output_dir,
     const std::chrono::duration<double, std::ratio<60>>& time,
-    const double frame_rate, const bool display) {
+    const double frame_rate) {
   // Time interval in millisecond between the last frame and the current frame.
   auto frame_interval =
       std::chrono::duration<double, std::milli>(1000.0 / frame_rate);

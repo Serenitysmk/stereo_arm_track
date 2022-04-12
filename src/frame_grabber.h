@@ -28,7 +28,7 @@ class FrameGrabber {
   // Record videos for a period of time.
   void Record(const std::string& output_dir,
               const std::chrono::duration<double, std::ratio<60>>& time,
-              const double frame_rate, const bool display);
+              const double frame_rate);
 
   // Close frame grabber.
   bool Close();
