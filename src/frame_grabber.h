@@ -33,7 +33,7 @@ class FrameGrabber {
   // Close frame grabber.
   bool Close();
 
- private:
+ public:
   // Display device info in the console.
   void PrintDeviceInfo(const IMV_DeviceList& devce_info_list);
 

@@ -201,7 +201,7 @@ void FrameGrabber::Record(
             << std::endl;
 
   // Write out videos.
-  VideoWriter(output_dir, frame_rate);
+  //VideoWriter(output_dir, frame_rate);
 
   return;
 }
