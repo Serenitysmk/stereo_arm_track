@@ -113,11 +113,6 @@ bool FrameGrabber::Init() {
   // Print device info list.
   PrintDeviceInfo(device_info_list);
 
-  for (const std::string& serial_number : camera_list_) {
-    std::cout << serial_number << " ";
-  }
-  std::cout << std::endl;
-
   // Initialize the cameras and start grabbing,
   // but the camera won't grab a frame until it
   // revices a trigger signal.
