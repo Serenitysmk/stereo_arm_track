@@ -57,20 +57,20 @@ void RunTestFrameGrabber() {
   }
 
   std::vector<std::unordered_map<std::string, cv::Mat>> grabbed_frames;
-  for (int i = 0; i < 100; i++) {
+  for (int i = 0; i < 10; i++) {
     std::unordered_map<std::string, cv::Mat> frames = grabber.Next();
     std::cout << "frames: " << i << std::endl;
     grabbed_frames.push_back(frames);
   }
 
-  for (int i = 0; i < 100; i++) {
+  for (int i = 0; i < 10; i++) {
     for (const auto& frame : grabbed_frames[i]) {
       cv::Mat img;
       cv::resize(frame.second, img, cv::Size(), 0.25, 0.25);
       cv::imshow(frame.first, img);
     }
     
-     cv::waitKey(1);
+     cv::waitKey(0);
   }
 
   grabber.Close();
