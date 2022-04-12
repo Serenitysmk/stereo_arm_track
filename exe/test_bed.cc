@@ -56,25 +56,19 @@ void RunTestFrameGrabber() {
     return;
   }
 
-  std::unordered_map<std::string, cv::Mat> frames = grabber.Next();
-
-  bool grab_success = true;
-
-  for (const auto& frame : frames) {
-    if (frame.second.empty()) grab_success = false;
+  std::vector<std::unordered_map<std::string, cv::Mat>> grabbed_frames;
+  for (int i = 0; i < 10; i++) {
+    std::unordered_map<std::string, cv::Mat> frames = grabber.Next();
+    grabbed_frames.push_back(frames);
   }
 
-  if (grab_success) {
-    std::cout << "Grab success!" << std::endl;
-    for (const auto& frame : frames) {
-      std::stringstream stream;
-      stream << "../data/Frame_" << frame.first << ".png";
-      cv::imwrite(stream.str(), frame.second);
+  for (int i = 0; i < 10; i++) {
+    for (const auto& frame : grabbed_frames[i]) {
+      cv::Mat img;
+      cv::resize(frame.second, img, cv::Size(), 0.25, 0.25);
+      cv::imshow(frame.first, img);
     }
-    cv::waitKey(0);
-
-  } else {
-    std::cerr << "ERROR: Grab frames failed!" << std::endl;
+    cv::waitKey(500);
   }
 
   grabber.Close();
@@ -91,8 +85,7 @@ void RunTestVideoRecord() {
     return;
   }
 
-  // Grab 10 frames;
-  grabber.Record(FLAGS_output_video_path, std::chrono::seconds(30), 25.0);
+  grabber.Record(FLAGS_output_video_path, std::chrono::seconds(10), 25.0);
 
   grabber.Close();
 }
