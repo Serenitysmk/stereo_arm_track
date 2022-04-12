@@ -156,8 +156,13 @@ void FrameGrabber::Record(
     record_param.recordFormat = typeVideoFormatAVI;
     record_param.pRecordFilePath = output_paths.at(serial_number).c_str();
 
+    record_params.emplace(dev_handle, record_param);
+  }
+
+  for (const std::string& serial_number : camera_list_) {
+    IMV_HANDLE dev_handle = device_handles_.at(serial_number);
     int ret = IMV_OK;
-    ret = IMV_OpenRecord(dev_handle, &record_param);
+    ret = IMV_OpenRecord(dev_handle, &record_params.at(dev_handle));
     if (ret != IMV_OK) {
       std::cerr << "ERROR: Open record failed! Error code " << ret << std::endl;
       return;
@@ -167,56 +172,75 @@ void FrameGrabber::Record(
   // Recording loop;
   PrintHeading1("Start video recording");
 
-  // double recorded_time = 0.0;
-  // double report_time = 0.0;
+  double recorded_time = 0.0;
+  double report_time = 0.0;
 
-  // auto start = std::chrono::high_resolution_clock::now();
-  // auto end = std::chrono::high_resolution_clock::now() + time;
+  auto start = std::chrono::high_resolution_clock::now();
+  auto end = std::chrono::high_resolution_clock::now() + time;
 
-  // auto last_report_time = start;
-  // while (std::chrono::high_resolution_clock::now() <= end) {
-  //   auto grab_start = std::chrono::high_resolution_clock::now();
+  auto last_report_time = start;
+  while (std::chrono::high_resolution_clock::now() <= end) {
+    auto grab_start = std::chrono::high_resolution_clock::now();
 
-  //   std::unordered_map<std::string, cv::Mat> frames = Next();
+    NextImpl();
 
-  //   // Push to the frames queue.
-  //   frames_queue_.push(frames);
+    // // Push to the frames queue.
+    // frames_queue_.push(frames);
+    for (const std::string& serial_number : camera_list_) {
+      IMV_HANDLE dev_handle = device_handles_.at(serial_number);
+      IMV_RecordFrameInfoParam record_frame_param;
+      IMV_Frame* frame = g_grabbed_frames.at(dev_handle);
+      record_frame_param.pData = frame->pData;
+      record_frame_param.nDataLen = frame->frameInfo.size;
+      record_frame_param.nPaddingX = frame->frameInfo.paddingX;
+      record_frame_param.nPaddingY = frame->frameInfo.paddingY;
+      record_frame_param.ePixelFormat = frame->frameInfo.pixelFormat;
 
-  //   auto current_time = std::chrono::high_resolution_clock::now();
+      // Record one frame.
+      int ret = IMV_OK;
+      ret = IMV_InputOneFrame(dev_handle, &record_frame_param);
+      if (ret != IMV_OK) {
+        std::cerr << "WARNING: Record frame failed!" << std::endl;
+      }
+    }
+    g_grabbed_frames.clear();
 
-  //   report_time = std::chrono::duration_cast<std::chrono::seconds>(
-  //                     current_time - last_report_time)
-  //                     .count();
-  //   if (report_time >= 10.0) {
-  //     recorded_time =
-  //         std::chrono::duration_cast<std::chrono::seconds>(current_time -
-  //         start)
-  //             .count();
-  //     std::cout << "Recording for " << recorded_time << " seconds ..."
-  //               << std::endl;
-  //     last_report_time = current_time;
-  //   }
+    auto current_time = std::chrono::high_resolution_clock::now();
 
-  //   auto grab_end = std::chrono::high_resolution_clock::now();
+    report_time = std::chrono::duration_cast<std::chrono::seconds>(
+                      current_time - last_report_time)
+                      .count();
+    if (report_time >= 10.0) {
+      recorded_time =
+          std::chrono::duration_cast<std::chrono::seconds>(current_time - start)
+              .count();
+      std::cout << "Recording for " << recorded_time << " seconds ..."
+                << std::endl;
+      last_report_time = current_time;
+    }
 
-  //   auto grab_elapsed =
-  //       std::chrono::duration_cast<std::chrono::duration<double,
-  //       std::milli>>(
-  //           grab_end - grab_start);
-  //   std::cout << "grab cost: " << grab_elapsed.count() << " ms" << std::endl;
-  //   // if (frame_interval > grab_elapsed) {
-  //   //   std::this_thread::sleep_for(frame_interval - grab_elapsed);
-  //   // }
-  // }
-  // end = std::chrono::high_resolution_clock::now();
-  // recorded_time =
-  //     std::chrono::duration_cast<std::chrono::duration<double,
-  //     std::ratio<60>>>(
-  //         end - start)
-  //         .count();
-  // std::cout << "Video recording stopped, time: " << recorded_time
-  //           << " minutes, number of frames: " << frames_queue_.size()
-  //           << std::endl;
+    auto grab_end = std::chrono::high_resolution_clock::now();
+
+    auto grab_elapsed =
+        std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(
+            grab_end - grab_start);
+    std::cout << "grab cost: " << grab_elapsed.count() << " ms" << std::endl;
+    // if (frame_interval > grab_elapsed) {
+    //   std::this_thread::sleep_for(frame_interval - grab_elapsed);
+    // }
+  }
+  end = std::chrono::high_resolution_clock::now();
+  recorded_time =
+      std::chrono::duration_cast<std::chrono::duration<double, std::ratio<60>>>(
+          end - start)
+          .count();
+  std::cout << "Video recording stopped, time: " << recorded_time
+            << " minutes, number of frames: " << frames_queue_.size()
+            << std::endl;
+
+  for (const std::string& serial_number : camera_list_) {
+    IMV_CloseRecord(device_handles_.at(serial_number));
+  }
 
   // Write out videos.
   // VideoWriter(output_dir, frame_rate);
