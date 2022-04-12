@@ -58,6 +58,7 @@ void OnFrameGrabbedAndRecord(IMV_Frame* p_frame, void* p_user) {
   IMV_InputOneFrame(dev_handle, &record_frame_param);
   {
     std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
+    g_grabbed_frames.emplace(dev_handle, p_frame);
     g_grab_finish_condition.notify_one();
   }
   return;
@@ -237,7 +238,8 @@ void FrameGrabber::Record(
     //   // Record one frame.
     //   IMV_InputOneFrame(dev_handle, &record_frame_param);
     // }
-    // g_grabbed_frames.clear();
+    g_grabbed_frames.clear();
+    
     auto current_time = std::chrono::high_resolution_clock::now();
     report_time = std::chrono::duration_cast<std::chrono::seconds>(
                       current_time - last_report_time)
@@ -508,6 +510,7 @@ bool FrameGrabber::InitCameras() {
     //   ret = IMV_AttachGrabbing(dev_handle, OnFrameGrabbed,
     //   (void*)dev_handle);
     // }
+    ret = IMV_AttachGrabbing(dev_handle, OnFrameGrabbed,(void*)dev_handle);
 
     if (ret != IMV_OK) {
       std::cerr << "ERROR: Attach grabbing failed! Error code " << ret
