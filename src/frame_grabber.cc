@@ -30,13 +30,9 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
 
   IMV_HANDLE dev_handle = (IMV_HANDLE)p_user;
 
-  IMV_Frame frame_clone;
-
-  IMV_CloneFrame(dev_handle, p_frame, &frame_clone);
-
   {
     std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
-    g_grabbed_frames.insert(std::make_pair(dev_handle, &frame_clone));
+    g_grabbed_frames.insert(std::make_pair(dev_handle, p_frame));
     g_grab_finish_condition.notify_one();
   }
 
@@ -149,10 +145,10 @@ void FrameGrabber::Record(
   while (std::chrono::high_resolution_clock::now() <= end) {
     auto grab_start = std::chrono::high_resolution_clock::now();
 
-    NextImpl();
+    std::unordered_map<std::string, cv::Mat> frames = Next();
 
     // Push to the frames queue.
-    frames_queue_.push(g_grabbed_frames);
+    frames_queue_.push(frames);
     g_grabbed_frames.clear();
 
     auto current_time = std::chrono::high_resolution_clock::now();
@@ -174,7 +170,7 @@ void FrameGrabber::Record(
     auto grab_elapsed =
         std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(
             grab_end - grab_start);
-
+    std::cout << "grab cost: " << grab_elapsed.count() << " ms" << std::endl;
     if (frame_interval > grab_elapsed) {
       std::this_thread::sleep_for(frame_interval - grab_elapsed);
     }
@@ -478,11 +474,8 @@ void FrameGrabber::VideoWriter(const std::string& output_dir,
 
   while (!frames_queue_.empty()) {
     for (const std::string& serial_number : camera_list_) {
-      IMV_HANDLE dev_handle = device_handles_.at(serial_number);
-      cv::Mat frame =
-          FrameToCvMat(dev_handle, frames_queue_.front().at(dev_handle));
-
-      video_writers.at(serial_number) << frame;
+      video_writers.at(serial_number)
+          << frames_queue_.front().at(serial_number);
     }
     frames_queue_.pop();
   }

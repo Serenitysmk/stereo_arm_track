@@ -68,7 +68,7 @@ class FrameGrabber {
   std::unordered_map<std::string, IMV_HANDLE> device_handles_;
 
   // Grabbed frames queue.
-  std::queue<std::unordered_map<IMV_HANDLE, IMV_Frame*>> frames_queue_;
+  std::queue<std::unordered_map<std::string, cv::Mat>> frames_queue_;
 };
 
 #endif  // STEREO_ARM_TRACK_FRAME_GRABBER_H_
