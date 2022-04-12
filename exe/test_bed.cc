@@ -93,14 +93,5 @@ void RunTestVideoRecord() {
 
   grabber.Record(FLAGS_output_video_path, std::chrono::seconds(60), 25.0);
 
-  // for (int i = 0; i < 2; i++) {
-  //   for (const auto& frame : grabber.frames_queue_.front()) {
-  //     cv::Mat img;
-  //     cv::resize(frame.second, img, cv::Size(), 0.25, 0.25);
-  //     cv::imshow(frame.first, img);
-  //   }
-  //   cv::waitKey(0);
-  //   grabber.frames_queue_.pop();
-  // }
   grabber.Close();
 }
