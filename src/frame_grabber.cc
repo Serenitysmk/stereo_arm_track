@@ -32,7 +32,7 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
 
   {
     std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
-    g_grabbed_frames.insert(std::make_pair(dev_handle, p_frame));
+    g_grabbed_frames.emplace(dev_handle, p_frame);
     g_grab_finish_condition.notify_one();
   }
   return;
@@ -196,13 +196,6 @@ void FrameGrabber::Record(
   for (const std::string& serial_number : camera_list_) {
     IMV_HANDLE dev_handle = device_handles_.at(serial_number);
     int ret = IMV_OK;
-    ret = IMV_AttachGrabbing(dev_handle, OnFrameGrabbedAndRecord,
-                             (void*)dev_handle);
-    if (ret != IMV_OK) {
-      std::cerr << "ERROR: Attach grabbing failed! Error code " << ret
-                << std::endl;
-      return;
-    }
     ret = IMV_OpenRecord(dev_handle, &record_params.at(dev_handle));
     if (ret != IMV_OK) {
       std::cerr << "ERROR: Open record failed! Error code " << ret << std::endl;
@@ -501,12 +494,17 @@ bool FrameGrabber::InitCameras() {
     }
 
     // Attach callback function.
-    // ret = IMV_AttachGrabbing(dev_handle, OnFrameGrabbed, (void*)dev_handle);
-    // if (ret != IMV_OK) {
-    //   std::cerr << "ERROR: Attach grabbing failed! Error code " << ret
-    //             << std::endl;
-    //   return false;
-    // }
+    if(record_mode_){
+      ret = IMV_AttachGrabbing(dev_handle, OnFrameGrabbedAndRecord, (void*)dev_handle);
+    }else{
+      ret = IMV_AttachGrabbing(dev_handle, OnFrameGrabbed, (void*)dev_handle);
+    }
+    
+    if (ret != IMV_OK) {
+      std::cerr << "ERROR: Attach grabbing failed! Error code " << ret
+                << std::endl;
+      return false;
+    }
 
     ret = IMV_StartGrabbing(dev_handle);
     if (ret != IMV_OK) {
