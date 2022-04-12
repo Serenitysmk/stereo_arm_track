@@ -59,7 +59,7 @@ class FrameGrabber {
   void NextImpl();
 
   // Video writer.
-  //void VideoWriter(const std::string& output_dir, const double frame_rate);
+  // void VideoWriter(const std::string& output_dir, const double frame_rate);
 
   size_t num_cameras_;
   const std::vector<std::string> camera_list_;
