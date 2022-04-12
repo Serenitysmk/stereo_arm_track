@@ -35,7 +35,6 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
     g_grabbed_frames.insert(std::make_pair(dev_handle, p_frame));
     g_grab_finish_condition.notify_one();
   }
-
   return;
 }
 
@@ -139,7 +138,7 @@ void FrameGrabber::Record(
   double report_time = 0.0;
 
   auto start = std::chrono::high_resolution_clock::now();
-  auto end = std::chrono::high_resolution_clock::now() + time + frame_interval;
+  auto end = std::chrono::high_resolution_clock::now() + time;
 
   auto last_report_time = start;
   while (std::chrono::high_resolution_clock::now() <= end) {
@@ -149,8 +148,7 @@ void FrameGrabber::Record(
 
     // Push to the frames queue.
     frames_queue_.push(frames);
-    g_grabbed_frames.clear();
-
+    
     auto current_time = std::chrono::high_resolution_clock::now();
 
     report_time = std::chrono::duration_cast<std::chrono::seconds>(
@@ -171,9 +169,9 @@ void FrameGrabber::Record(
         std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(
             grab_end - grab_start);
     std::cout << "grab cost: " << grab_elapsed.count() << " ms" << std::endl;
-    if (frame_interval > grab_elapsed) {
-      std::this_thread::sleep_for(frame_interval - grab_elapsed);
-    }
+    // if (frame_interval > grab_elapsed) {
+    //   std::this_thread::sleep_for(frame_interval - grab_elapsed);
+    // }
   }
   end = std::chrono::high_resolution_clock::now();
   recorded_time =

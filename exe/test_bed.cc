@@ -20,7 +20,7 @@ DEFINE_string(
     camera_list,
     "7L03E0EPAK00002, 7L03E0EPAK00005, 7L03E0EPAK00022, 7L03E0EPAK00026",
     "Used camera serial numbers");
-DEFINE_bool(record, false, "Is recording?");
+DEFINE_bool(record, true, "Is recording?");
 DEFINE_string(output_video_path, "../data/videos",
               "Output path of the recorded videos");
 
@@ -57,18 +57,20 @@ void RunTestFrameGrabber() {
   }
 
   std::vector<std::unordered_map<std::string, cv::Mat>> grabbed_frames;
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < 100; i++) {
     std::unordered_map<std::string, cv::Mat> frames = grabber.Next();
+    std::cout << "frames: " << i << std::endl;
     grabbed_frames.push_back(frames);
   }
 
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < 100; i++) {
     for (const auto& frame : grabbed_frames[i]) {
       cv::Mat img;
       cv::resize(frame.second, img, cv::Size(), 0.25, 0.25);
-      // cv::imshow(frame.first, img);
+      cv::imshow(frame.first, img);
     }
-    // cv::waitKey(1);
+    
+     cv::waitKey(1);
   }
 
   grabber.Close();
@@ -85,13 +87,13 @@ void RunTestVideoRecord() {
     return;
   }
 
-  grabber.Record(FLAGS_output_video_path, std::chrono::seconds(10), 25.0);
+  grabber.Record(FLAGS_output_video_path, std::chrono::seconds(5), 25.0);
 
   for (int i = 0; i < 2; i++) {
     for (const auto& frame : grabber.frames_queue_.front()) {
       cv::Mat img;
       cv::resize(frame.second, img, cv::Size(), 0.25, 0.25);
-      cv::imshow(frame.first, frame.second);
+      cv::imshow(frame.first, img);
     }
     cv::waitKey(0);
     grabber.frames_queue_.pop();
