@@ -16,9 +16,13 @@ using namespace colmap;
 ////////////////////////////////////////////////////////////////////////////////
 
 DEFINE_int32(num_cameras, 4, "Number of cameras.");
+// DEFINE_string(
+//     camera_list,
+//     "7L03E0EPAK00002, 7L03E0EPAK00005, 7L03E0EPAK00022, 7L03E0EPAK00026",
+//     "Used camera serial numbers");
 DEFINE_string(
     camera_list,
-    "7L03E0EPAK00002, 7L03E0EPAK00005, 7L03E0EPAK00022, 7L03E0EPAK00026",
+    "7L03E0EPAK00022",
     "Used camera serial numbers");
 DEFINE_bool(record, true, "Is recording?");
 DEFINE_string(output_video_path, "../data/videos",
@@ -87,7 +91,7 @@ void RunTestVideoRecord() {
     return;
   }
 
-  grabber.Record(FLAGS_output_video_path, std::chrono::seconds(5), 25.0);
+  grabber.Record(FLAGS_output_video_path, std::chrono::seconds(10), 25.0);
 
   // for (int i = 0; i < 2; i++) {
   //   for (const auto& frame : grabber.frames_queue_.front()) {

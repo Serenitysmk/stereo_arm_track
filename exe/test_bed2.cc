@@ -7,8 +7,8 @@
 int main(int argc, char* argv[]) {
   std::cout << "Hello World" << std::endl;
 
-  const std::string vid_path1 = "../TEST_videos/videos/7L03E0EPAK00022.ts";
-  const std::string vid_path2 = "../TEST_videos/videos/7L03E0EPAK00026.ts";
+  const std::string vid_path1 = "../data/videos/7L03E0EPAK00022.avi";
+  const std::string vid_path2 = "../data/videos/7L03E0EPAK00026.avi";
 
   cv::VideoCapture vid1(vid_path1);
   cv::VideoCapture vid2(vid_path2);
@@ -35,10 +35,10 @@ int main(int argc, char* argv[]) {
   vid1.release();
   vid2.release();
 
-  vid1.open(vid_path1);
-  vid2.open(vid_path2);
+  //vid1.open(vid_path1);
+  //vid2.open(vid_path2);
 
-  while (true)
+  while (false)
   {
     vid1 >> frame1;
     vid2 >> frame2;
