@@ -66,9 +66,9 @@ void RunTestFrameGrabber() {
     for (const auto& frame : grabbed_frames[i]) {
       cv::Mat img;
       cv::resize(frame.second, img, cv::Size(), 0.25, 0.25);
-      cv::imshow(frame.first, img);
+      //cv::imshow(frame.first, img);
     }
-    cv::waitKey(500);
+    //cv::waitKey(1);
   }
 
   grabber.Close();
