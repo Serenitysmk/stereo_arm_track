@@ -93,13 +93,13 @@ void RunTestVideoRecord() {
 
   // Grab 10 frames;
   std::vector<std::unordered_map<std::string, cv::Mat>> grabbed_frames;
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < 5; i++) {
     std::unordered_map<std::string, cv::Mat> frames = grabber.Next();
     grabbed_frames.push_back(frames);
   }
 
   // visualize
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < 5; i++) {
     for (const auto& frame : grabbed_frames[i]) {
       cv::Mat small;
       cv::resize(frame.second, small, cv::Size(), 0.5, 0.5);

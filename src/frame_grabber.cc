@@ -507,8 +507,8 @@ cv::Mat FrameGrabber::FrameToCvMat(IMV_HANDLE dev_handle, IMV_Frame* frame) {
   // PixelFormatConversion(dev_handle, frame);
 
   cv::Size size(frame->frameInfo.width, frame->frameInfo.height);
-
   cv::Mat frame_cv = cv::Mat::zeros(size, CV_8UC3);
+  PixelFormatConversion(dev_handle, frame, frame_cv.data);
   return frame_cv;
 }
 
