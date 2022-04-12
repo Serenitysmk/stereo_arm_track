@@ -33,8 +33,6 @@ class FrameGrabber {
   // Close frame grabber.
   bool Close();
 
-  bool TestGrabFrameOneCamera();
-
  private:
   // Display device info in the console.
   void PrintDeviceInfo(const IMV_DeviceList& devce_info_list);
@@ -42,14 +40,12 @@ class FrameGrabber {
   // Set soft trigger configuration.
   int SetSoftTriggerConf(IMV_HANDLE dev_handle);
 
-  // Allocate memory for pixel format conversion buffer.
-  int MallocConvertBuffer();
-
   // Convert frame to OpenCV Mat.
   cv::Mat FrameToCvMat(IMV_HANDLE dev_handle, IMV_Frame* frame);
 
   // Pixel format conversion.
-  void PixelFormatConversion(IMV_HANDLE dev_handle, IMV_Frame* frame, unsigned char* target_data);
+  void PixelFormatConversion(IMV_HANDLE dev_handle, IMV_Frame* frame,
+                             cv::Mat* frame_cv);
 
   // Send software trigger signals.
   void ExecuteTriggerSoft();
@@ -70,8 +66,6 @@ class FrameGrabber {
 
   // Device handles.
   std::unordered_map<std::string, IMV_HANDLE> device_handles_;
-
-  std::unordered_map<IMV_HANDLE, unsigned char*> convert_buffers;
 
   // Grabbed frames queue.
   std::queue<std::unordered_map<IMV_HANDLE, IMV_Frame*>> frames_queue_;

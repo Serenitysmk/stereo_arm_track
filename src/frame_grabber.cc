@@ -119,12 +119,6 @@ bool FrameGrabber::Init() {
     return false;
   }
 
-  // Prepare convert buffer.
-  ret = MallocConvertBuffer();
-  if (ret != IMV_OK) {
-    return false;
-  }
-
   std::cout << "Finished initialization, cameras are ready." << std::endl;
   return true;
 }
@@ -242,113 +236,6 @@ bool FrameGrabber::Close() {
   return true;
 }
 
-bool FrameGrabber::TestGrabFrameOneCamera() {
-  std::cout << "Test grabbing frame for camera " << 1 << std::endl;
-
-  // Open Camera.
-  int ret = IMV_OK;
-
-  IMV_DeviceList device_info_list;
-  ret = IMV_EnumDevices(&device_info_list, interfaceTypeUsb3);
-  if (ret != IMV_OK) {
-    std::cerr << "ERROR: Failed to find camera devices! Error code " << ret
-              << std::endl;
-    return false;
-  }
-
-  // Found devices.
-  if (device_info_list.nDevNum < 1) {
-    std::cerr << "ERROR: No camera found." << std::endl;
-    return false;
-  } else if (device_info_list.nDevNum != num_cameras_) {
-    std::cerr << "ERROR: Found " << device_info_list.nDevNum << " cameras, but "
-              << num_cameras_ << " is expected." << std::endl;
-    return false;
-  }
-
-  for (size_t i = 0; i < device_info_list.nDevNum; i++) {
-    IMV_HANDLE dev_handle;
-    ret = IMV_CreateHandle(&dev_handle, modeByIndex, (void*)&i);
-    if (ret != IMV_OK) {
-      std::cerr << "ERROR: Create device handle failed! Error code " << ret
-                << std::endl;
-      return false;
-    }
-    device_handles_.insert(
-        std::make_pair(device_info_list.pDevInfo[i].serialNumber, dev_handle));
-  }
-
-  // Print device info list.
-  PrintDeviceInfo(device_info_list);
-
-  IMV_HANDLE dev_handle = device_handles_.at("7L03E0EPAK00002");
-
-  ret = IMV_Open(dev_handle);
-  if (ret != IMV_OK) {
-    std::cerr << "Open camera failed! Error code " << ret << std::endl;
-    return false;
-  }
-
-  // Set software trigger config.
-  ret = SetSoftTriggerConf(dev_handle);
-  if (ret != IMV_OK) {
-    return false;
-  }
-
-  // Register data frame callback function.
-  ret = IMV_AttachGrabbing(dev_handle, OnFrameGrabbed, (void*)dev_handle);
-  if (ret != IMV_OK) {
-    std::cerr << "ERROR: Attach grabbing failed! Error code " << ret
-              << std::endl;
-    return false;
-  }
-
-  ret = MallocConvertBuffer();
-  if (ret != IMV_OK) {
-    return false;
-  }
-
-  IMV_SetIntFeatureValue(dev_handle, "ExposureTargetBrightness", 100);
-  IMV_SetDoubleFeatureValue(dev_handle, "GainRaw", 4.0);
-  IMV_SetDoubleFeatureValue(dev_handle, "Gamma", 0.45);
-
-  // Start grabbing.
-  ret = IMV_StartGrabbing(dev_handle);
-  if (ret != IMV_OK) {
-    std::cerr << "ERROR: Start grabbing failed! Error code " << ret
-              << std::endl;
-    return false;
-  }
-
-  // Grab.
-  std::thread grab_worker(ExecuteSoftTrigger, dev_handle);
-
-  g_is_exit_thread = false;
-
-  using namespace std::chrono_literals;
-  std::this_thread::sleep_for(10s);
-
-  g_is_exit_thread = true;
-
-  grab_worker.join();
-
-  // Stop grabbing.
-  ret = IMV_StopGrabbing(dev_handle);
-  if (ret != IMV_OK) {
-    std::cerr << "ERROR: Stop grabbing failed! Error code " << ret << std::endl;
-    return false;
-  }
-
-  // Close camera.
-  ret = IMV_Close(dev_handle);
-
-  if (ret != IMV_OK) {
-    std::cerr << "ERROR: Close camera failed! Error code " << ret << std::endl;
-    return false;
-  }
-  return true;
-}
-
 void FrameGrabber::PrintDeviceInfo(const IMV_DeviceList& device_info_list) {
   char vendor_name_cat[11];
   char camera_name_cat[16];
@@ -456,64 +343,17 @@ int FrameGrabber::SetSoftTriggerConf(IMV_HANDLE dev_handle) {
   return ret;
 }
 
-int FrameGrabber::MallocConvertBuffer() {
-  int ret = IMV_OK;
-  uint64_t pixel_format_val = 0;
-  int64_t width = 0;
-  int64_t height = 0;
-  for (const std::string& serial_number : camera_list_) {
-    IMV_HANDLE dev_handle = device_handles_.at(serial_number);
-    ret = IMV_GetEnumFeatureValue(dev_handle, "PixelFormat", &pixel_format_val);
-
-    if (ret != IMV_OK) {
-      std::cerr << "ERROR: Get PixelFormat feature value failed! Error code "
-                << ret << std::endl;
-      return ret;
-    }
-
-    if (pixel_format_val == (uint64_t)gvspPixelMono8 ||
-        pixel_format_val == (uint64_t)gvspPixelBGR8) {
-      return IMV_OK;
-    }
-
-    ret = IMV_GetIntFeatureValue(dev_handle, "Width", &width);
-    if (ret != IMV_OK) {
-      std::cerr << "ERROR: Get Width feature value failed! Error code " << ret
-                << std::endl;
-      return ret;
-    }
-
-    ret = IMV_GetIntFeatureValue(dev_handle, "Height", &height);
-    if (ret != IMV_OK) {
-      std::cerr << "ERROR: Get Height feature value failed! Error code " << ret
-                << std::endl;
-      return ret;
-    }
-
-    convert_buffers.insert(std::make_pair(
-        dev_handle, new unsigned char[(int)width * (int)height * 3]));
-
-    if (convert_buffers.at(dev_handle) == nullptr) {
-      std::cerr << "ERROR: Allocation memory to convert buffer failed!"
-                << std::endl;
-      return IMV_NO_MEMORY;
-    }
-  }
-
-  return IMV_OK;
-}
-
 cv::Mat FrameGrabber::FrameToCvMat(IMV_HANDLE dev_handle, IMV_Frame* frame) {
   // PixelFormatConversion(dev_handle, frame);
 
   cv::Size size(frame->frameInfo.width, frame->frameInfo.height);
   cv::Mat frame_cv = cv::Mat::zeros(size, CV_8UC3);
-  PixelFormatConversion(dev_handle, frame, frame_cv.data);
+  PixelFormatConversion(dev_handle, frame, &frame_cv);
   return frame_cv;
 }
 
 void FrameGrabber::PixelFormatConversion(IMV_HANDLE dev_handle,
-                                         IMV_Frame* frame, unsigned char* target_data) {
+                                         IMV_Frame* frame, cv::Mat* frame_cv) {
   int ret = IMV_OK;
   IMV_PixelConvertParam pixel_convert_params;
 
@@ -530,7 +370,7 @@ void FrameGrabber::PixelFormatConversion(IMV_HANDLE dev_handle,
     pixel_convert_params.eBayerDemosaic = demosaicNearestNeighbor;
     pixel_convert_params.eDstPixelFormat = gvspPixelBGR8;
 
-    pixel_convert_params.pDstBuf = target_data;
+    pixel_convert_params.pDstBuf = frame_cv->data;
 
     pixel_convert_params.nDstBufSize =
         frame->frameInfo.width * frame->frameInfo.height * 3;
@@ -540,8 +380,6 @@ void FrameGrabber::PixelFormatConversion(IMV_HANDLE dev_handle,
       std::cerr << "ERROR: Image convert to BGR failed! Error code " << ret
                 << std::endl;
     }
-    frame->pData = target_data;
-    frame->frameInfo.pixelFormat = gvspPixelBGR8;
   }
 }
 
