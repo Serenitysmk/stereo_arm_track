@@ -12,8 +12,6 @@ using namespace colmap;
 
 namespace {
 
-bool g_is_exit_thread = false;
-
 // Grabbed frames.
 std::unordered_map<IMV_HANDLE, IMV_Frame*> g_grabbed_frames;
 
@@ -32,27 +30,17 @@ void OnFrameGrabbed(IMV_Frame* p_frame, void* p_user) {
 
   IMV_HANDLE dev_handle = (IMV_HANDLE)p_user;
 
+  IMV_Frame frame_clone;
+
+  IMV_CloneFrame(dev_handle, p_frame, &frame_clone);
+
   {
     std::unique_lock<std::mutex> lock(g_grab_frame_mutex);
-    g_grabbed_frames.insert(std::make_pair(dev_handle, p_frame));
+    g_grabbed_frames.insert(std::make_pair(dev_handle, &frame_clone));
     g_grab_finish_condition.notify_one();
   }
 
   return;
-}
-
-void ExecuteSoftTrigger(IMV_HANDLE dev_handle) {
-  int ret = IMV_OK;
-
-  while (!g_is_exit_thread) {
-    ret = IMV_ExecuteCommandFeature(dev_handle, "TriggerSoftware");
-    if (ret != IMV_OK) {
-      std::cerr << "WARNING: Execute TriggerSoftware failed! Error code " << ret
-                << std::endl;
-      continue;
-    }
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-  }
 }
 
 }  // namespace
@@ -201,7 +189,7 @@ void FrameGrabber::Record(
             << std::endl;
 
   // Write out videos.
-  //VideoWriter(output_dir, frame_rate);
+  // VideoWriter(output_dir, frame_rate);
 
   return;
 }

@@ -87,7 +87,7 @@ void RunTestVideoRecord() {
 
   grabber.Record(FLAGS_output_video_path, std::chrono::seconds(10), 25.0);
 
-  while (!grabber.frames_queue_.empty()) {
+  for (int i = 0; i < 2; i++) {
     for (const std::string& serial_number : grabber.camera_list_) {
       IMV_HANDLE dev_handle = grabber.device_handles_.at(serial_number);
       // cv::Mat frame =
