@@ -174,14 +174,14 @@ void FrameGrabber::Record(
     g_grabbed_frames.clear();
 
     auto current_time = std::chrono::high_resolution_clock::now();
-    
+
     report_time = std::chrono::duration_cast<std::chrono::seconds>(
-                        current_time - last_report_time)
-                        .count();
+                      current_time - last_report_time)
+                      .count();
     if (report_time >= 10.0) {
-      recorded_time = std::chrono::duration_cast<std::chrono::seconds>(
-                        current_time -start)
-                        .count();
+      recorded_time =
+          std::chrono::duration_cast<std::chrono::seconds>(current_time - start)
+              .count();
       std::cout << "Recording for " << recorded_time << " seconds ..."
                 << std::endl;
       last_report_time = current_time;
@@ -504,10 +504,12 @@ int FrameGrabber::MallocConvertBuffer() {
 }
 
 cv::Mat FrameGrabber::FrameToCvMat(IMV_HANDLE dev_handle, IMV_Frame* frame) {
-  PixelFormatConversion(dev_handle, frame);
+  // PixelFormatConversion(dev_handle, frame);
 
   cv::Size size(frame->frameInfo.width, frame->frameInfo.height);
-  return cv::Mat(size, CV_8UC3, (uchar*)frame->pData);
+
+  cv::Mat frame_cv = cv::Mat::zeros(size, CV_8UC3);
+  return frame_cv;
 }
 
 void FrameGrabber::PixelFormatConversion(IMV_HANDLE dev_handle,

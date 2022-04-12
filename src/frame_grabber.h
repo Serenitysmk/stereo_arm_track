@@ -26,7 +26,8 @@ class FrameGrabber {
   std::unordered_map<std::string, cv::Mat> Next();
 
   // Record videos for a period of time.
-  void Record(const std::string& output_dir, const std::chrono::duration<double, std::ratio<60>>& time,
+  void Record(const std::string& output_dir,
+              const std::chrono::duration<double, std::ratio<60>>& time,
               const double frame_rate, const bool display);
 
   // Close frame grabber.
@@ -62,8 +63,7 @@ class FrameGrabber {
   void NextImpl();
 
   // Video writer.
-  void VideoWriter(const std::string& output_dir,
-                         const double frame_rate);
+  void VideoWriter(const std::string& output_dir, const double frame_rate);
 
   size_t num_cameras_;
   const std::vector<std::string> camera_list_;
