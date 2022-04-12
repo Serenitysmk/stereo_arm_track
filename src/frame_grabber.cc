@@ -183,8 +183,6 @@ void FrameGrabber::Record(
 
     NextImpl();
 
-    // // Push to the frames queue.
-    // frames_queue_.push(frames);
     for (const std::string& serial_number : camera_list_) {
       IMV_HANDLE dev_handle = device_handles_.at(serial_number);
       IMV_RecordFrameInfoParam record_frame_param;
@@ -209,6 +207,7 @@ void FrameGrabber::Record(
                        current_time - start)
                        .count()
                 << " seconds ..." << std::endl;
+      last_report_time = current_time;
     }
 
     auto grab_end = std::chrono::high_resolution_clock::now();
@@ -216,8 +215,6 @@ void FrameGrabber::Record(
     auto grab_elapsed =
         std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(
             grab_end - grab_start);
-
-    std::cout << "Grab elapsed: " << grab_elapsed.count() << " ms" << std::endl;
 
     if (frame_interval > grab_elapsed) {
       std::this_thread::sleep_for(frame_interval - grab_elapsed);

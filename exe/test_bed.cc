@@ -91,7 +91,7 @@ void RunTestVideoRecord() {
     return;
   }
 
-  grabber.Record(FLAGS_output_video_path, std::chrono::seconds(60), 25.0);
+  grabber.Record(FLAGS_output_video_path, std::chrono::seconds(5), 25.0);
 
   // for (int i = 0; i < 2; i++) {
   //   for (const auto& frame : grabber.frames_queue_.front()) {
