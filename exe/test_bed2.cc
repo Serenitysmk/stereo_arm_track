@@ -7,8 +7,8 @@
 int main(int argc, char* argv[]) {
   std::cout << "Hello World" << std::endl;
 
-  const std::string vid_path1 = "../data_transport/videos/7L03E0EPAK00022.avi";
-  const std::string vid_path2 = "../data_transport/videos/7L03E0EPAK00026.avi";
+  const std::string vid_path1 = "../data/videos/7L03E0EPAK00022.avi";
+  const std::string vid_path2 = "../data/videos/7L03E0EPAK00026.avi";
 
   cv::VideoCapture vid1(vid_path1);
   cv::VideoCapture vid2(vid_path2);
