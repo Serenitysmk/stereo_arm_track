@@ -3,7 +3,7 @@
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
-#include <opencv2/highgui.hpp>
+#include <opencv2/opencv.hpp>
 
 #include <util/misc.h>
 
@@ -101,7 +101,9 @@ void RunTestVideoRecord() {
   // visualize
   for (int i = 0; i < 10; i++) {
     for (const auto& frame : grabbed_frames[i]) {
-      cv::imshow(frame.first, frame.second);
+      cv::Mat small;
+      cv::resize(frame.second, small, cv::Size(), 0.5, 0.5);
+      cv::imshow(frame.first, small);
     }
     cv::waitKey(0);
   }

@@ -4,8 +4,7 @@
 #include <thread>
 #include <unordered_map>
 
-#include <opencv2/highgui.hpp>
-#include <opencv2/video.hpp>
+#include <opencv2/opencv.hpp>
 
 #include <util/misc.h>
 
