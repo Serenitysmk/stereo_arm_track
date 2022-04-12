@@ -3,7 +3,7 @@
     <ExtraInfo>
         <SDKVersion>V2.3.2.194984</SDKVersion>
         <SourceOfGeneration>MVViewer</SourceOfGeneration>
-        <TimeOfGeneration>2022-04-11 15:59:34</TimeOfGeneration>
+        <TimeOfGeneration>2022-04-12 19:59:19</TimeOfGeneration>
     </ExtraInfo>
     <MVViewer>
         <deviceCtrlVisibility>Guru</deviceCtrlVisibility>
@@ -176,7 +176,7 @@
             </selectingname>
             <selectingname>
                 <BalanceRatioSelector>0</BalanceRatioSelector>
-                <BalanceRatio>1.4084</BalanceRatio>
+                <BalanceRatio>1</BalanceRatio>
             </selectingname>
             <Gamma>0.45</Gamma>
             <LUTSelector>0</LUTSelector>

@@ -3,7 +3,7 @@
     <ExtraInfo>
         <SDKVersion>V2.3.2.194984</SDKVersion>
         <SourceOfGeneration>MVViewer</SourceOfGeneration>
-        <TimeOfGeneration>2022-04-11 15:55:25</TimeOfGeneration>
+        <TimeOfGeneration>2022-04-12 20:01:26</TimeOfGeneration>
     </ExtraInfo>
     <MVViewer>
         <deviceCtrlVisibility>Guru</deviceCtrlVisibility>
@@ -161,7 +161,7 @@
                 <UserOutputValueAll>0</UserOutputValueAll>
             </selectingname>
             <GainSelector>0</GainSelector>
-            <GainRaw>4</GainRaw>
+            <GainRaw>7</GainRaw>
             <BlackLevelAuto>0</BlackLevelAuto>
             <BlackLevelSelector>0</BlackLevelSelector>
             <BlackLevel>60</BlackLevel>
@@ -176,7 +176,7 @@
             </selectingname>
             <selectingname>
                 <BalanceRatioSelector>0</BalanceRatioSelector>
-                <BalanceRatio>1.60299</BalanceRatio>
+                <BalanceRatio>1</BalanceRatio>
             </selectingname>
             <Gamma>0.45</Gamma>
             <LUTSelector>0</LUTSelector>
@@ -226,7 +226,7 @@
             <DenoisingEnabled>1</DenoisingEnabled>
             <Denoising>50</Denoising>
             <DigitalShift>0</DigitalShift>
-            <Brightness>60</Brightness>
+            <Brightness>80</Brightness>
         </Property>
         <DrawROI/>
     </device>
