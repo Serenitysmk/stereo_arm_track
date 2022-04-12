@@ -33,7 +33,7 @@ class FrameGrabber {
   // Close frame grabber.
   bool Close();
 
- public:
+ private:
   // Display device info in the console.
   void PrintDeviceInfo(const IMV_DeviceList& devce_info_list);
 
@@ -66,9 +66,6 @@ class FrameGrabber {
 
   // Device handles.
   std::unordered_map<std::string, IMV_HANDLE> device_handles_;
-
-  // Grabbed frames queue.
-  std::queue<std::unordered_map<std::string, cv::Mat>> frames_queue_;
 };
 
 #endif  // STEREO_ARM_TRACK_FRAME_GRABBER_H_

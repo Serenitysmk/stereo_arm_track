@@ -225,16 +225,12 @@ void FrameGrabber::Record(
       std::chrono::duration_cast<std::chrono::duration<double, std::ratio<60>>>(
           end - start)
           .count();
-  std::cout << "Video recording stopped, time: " << recorded_time
-            << " minutes, number of frames: " << frames_queue_.size()
+  std::cout << "Video recording stopped, time: " << recorded_time << " minutes"
             << std::endl;
 
   for (const std::string& serial_number : camera_list_) {
     IMV_CloseRecord(device_handles_.at(serial_number));
   }
-
-  // Write out videos.
-  // VideoWriter(output_dir, frame_rate);
 
   return;
 }
@@ -495,41 +491,3 @@ void FrameGrabber::NextImpl() {
     });
   }
 }
-
-// void FrameGrabber::VideoWriter(const std::string& output_dir,
-//                                const double frame_rate) {
-//   CreateDirIfNotExists(output_dir);
-
-//   std::unordered_map<std::string, std::string> output_paths;
-//   std::unordered_map<std::string, cv::VideoWriter> video_writers;
-
-//   for (const std::string& serial_number : camera_list_) {
-//     output_paths.insert(std::make_pair(
-//         serial_number, JoinPaths(output_dir, serial_number + ".ts")));
-//     int64_t width = 0;
-//     int64_t height = 0;
-
-//     IMV_GetIntFeatureValue(device_handles_.at(serial_number), "Width",
-//     &width);
-
-//     IMV_GetIntFeatureValue(device_handles_.at(serial_number), "Height",
-//                            &height);
-
-//     cv::VideoWriter video_writer(output_paths.at(serial_number),
-//                                  cv::VideoWriter::fourcc('M', 'P', 'E', 'G'),
-//                                  frame_rate, cv::Size(width, height));
-
-//     video_writers.insert(std::make_pair(serial_number, video_writer));
-//   }
-
-//   while (!frames_queue_.empty()) {
-//     for (const std::string& serial_number : camera_list_) {
-//       video_writers.at(serial_number)
-//           << frames_queue_.front().at(serial_number);
-//     }
-//     frames_queue_.pop();
-//   }
-//   for (const std::string& serial_number : camera_list_) {
-//     video_writers.at(serial_number).release();
-//   }
-// }
