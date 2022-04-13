@@ -91,7 +91,7 @@ void RunTestVideoRecord() {
     return;
   }
 
-  grabber.Record(FLAGS_output_video_path, std::chrono::seconds(60), 25.0);
+  grabber.Record(FLAGS_output_video_path, std::chrono::seconds(10), 25.0);
 
   grabber.Close();
 }
