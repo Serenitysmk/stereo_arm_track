@@ -4,8 +4,6 @@
 #include <thread>
 #include <unordered_map>
 
-#include <opencv2/opencv.hpp>
-
 #include <util/misc.h>
 
 using namespace colmap;
@@ -110,8 +108,13 @@ void OnFrameGrabbedAndRecord(IMV_Frame* p_frame, void* p_user) {
 }  // namespace
 
 FrameGrabber::FrameGrabber(const size_t num_cameras,
-                           const std::vector<std::string>& camera_list)
-    : num_cameras_(num_cameras), camera_list_(camera_list) {
+                           const std::vector<std::string>& camera_list,
+                           const bool grab_from_videos,
+                           const std::string& input_path)
+    : num_cameras_(num_cameras),
+      camera_list_(camera_list),
+      grab_from_videos_(grab_from_videos),
+      input_path_(input_path) {
   CHECK_GT(camera_list_.size(), 0);
 }
 
@@ -127,7 +130,11 @@ const std::vector<std::string>& FrameGrabber::CameraList() const {
 }
 
 bool FrameGrabber::Init() {
-  PrintHeading1("Initialize cameras");
+  if (grab_from_videos_) {
+    return InitVideoCaptures();
+  }
+
+  PrintHeading2("Initialize cameras");
   // Find camera devices and return if no devices are found
   // or the number of devices is different from the setting.
   int ret = IMV_OK;
@@ -178,11 +185,19 @@ bool FrameGrabber::Init() {
 std::unordered_map<std::string, cv::Mat> FrameGrabber::Next() {
   std::unordered_map<std::string, cv::Mat> grabbed_frames;
 
-  NextImpl();
+  if (grab_from_videos_) {
+    for (const std::string& serial_number : camera_list_) {
+      cv::Mat frame;
+      video_captures_.at(serial_number) >> frame;
+      grabbed_frames.emplace(serial_number, frame);
+    }
+  } else {
+    NextImpl();
 
-  for (const std::string& serial_number : camera_list_) {
-    IMV_HANDLE dev_handle = device_handles_.at(serial_number);
-    grabbed_frames.emplace(serial_number, g_grabbed_frames.at(dev_handle));
+    for (const std::string& serial_number : camera_list_) {
+      IMV_HANDLE dev_handle = device_handles_.at(serial_number);
+      grabbed_frames.emplace(serial_number, g_grabbed_frames.at(dev_handle));
+    }
   }
 
   return grabbed_frames;
@@ -192,6 +207,12 @@ void FrameGrabber::Record(
     const std::string& output_dir,
     const std::chrono::duration<double, std::ratio<60>>& time,
     const double frame_rate) {
+  if (grab_from_videos_) {
+    std::cerr
+        << "ERROR: Can't record because you are grabbing frames from videos!"
+        << std::endl;
+    return;
+  }
   // Time interval in millisecond between the last frame and the current frame.
   auto frame_interval =
       std::chrono::duration<double, std::milli>(1000.0 / frame_rate);
@@ -242,7 +263,7 @@ void FrameGrabber::Record(
   }
 
   // Recording loop;
-  PrintHeading1("Start video recording");
+  PrintHeading2("Start video recording");
 
   double recorded_time = 0.0;
   double report_time = 0.0;
@@ -308,6 +329,13 @@ void FrameGrabber::Record(
 }
 
 bool FrameGrabber::Close() {
+  if (grab_from_videos_) {
+    for (auto& video : video_captures_) {
+      video.second.release();
+    }
+    return true;
+  }
+
   int ret = IMV_OK;
   for (const std::string& serial_number : camera_list_) {
     IMV_HANDLE dev_handle = device_handles_.at(serial_number);
@@ -492,13 +520,6 @@ bool FrameGrabber::InitCameras() {
     }
 
     // Attach callback function.
-    // if(record_mode_){
-    //   ret = IMV_AttachGrabbing(dev_handle, OnFrameGrabbedAndRecord,
-    //   (void*)dev_handle);
-    // }else{
-    //   ret = IMV_AttachGrabbing(dev_handle, OnFrameGrabbed,
-    //   (void*)dev_handle);
-    // }
     ret = IMV_AttachGrabbing(dev_handle, OnFrameGrabbed, (void*)dev_handle);
 
     if (ret != IMV_OK) {
@@ -513,6 +534,21 @@ bool FrameGrabber::InitCameras() {
                 << std::endl;
       return false;
     }
+  }
+  return true;
+}
+
+bool FrameGrabber::InitVideoCaptures() {
+  PrintHeading2("Initialize video captures");
+
+  for (const std::string& serial_number : camera_list_) {
+    cv::VideoCapture video(JoinPaths(input_path_, serial_number + ".avi"));
+    if (!video.isOpened()) {
+      std::cerr << "ERROR: Failed to initialize video capture for "
+                << serial_number << std::endl;
+      return false;
+    }
+    video_captures_.emplace(serial_number, video);
   }
   return true;
 }

@@ -1,6 +1,9 @@
 # Stereo arm track library source files.
 set(SRCS
 frame_grabber.h frame_grabber.cc
+marker.h marker.cc
+marker_detector.h marker_detector.cc
+visualizer.h visualizer.cc
 controller.h controller.cc
 )
 

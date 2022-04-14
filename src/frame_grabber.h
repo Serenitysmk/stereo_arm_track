@@ -6,14 +6,16 @@
 #include <unordered_map>
 #include <vector>
 
-#include <opencv2/core.hpp>
+#include <opencv2/opencv.hpp>
 
 #include <IMVApi.h>
 
 class FrameGrabber {
  public:
   FrameGrabber(const size_t num_cameras,
-               const std::vector<std::string>& camera_list);
+               const std::vector<std::string>& camera_list,
+               const bool grab_from_videos = false,
+               const std::string& input_path = "");
 
   ~FrameGrabber();
 
@@ -48,6 +50,9 @@ class FrameGrabber {
   // revices a trigger signal.
   bool InitCameras();
 
+  // Initialize the video captures.
+  bool InitVideoCaptures();
+
   // Actual implementation of getting the next frame.
   void NextImpl();
 
@@ -56,6 +61,14 @@ class FrameGrabber {
 
   // Device handles.
   std::unordered_map<std::string, IMV_HANDLE> device_handles_;
+
+  // Whether to grab frames from videos.
+  bool grab_from_videos_;
+
+  // Path to the input video directory.
+  const std::string input_path_;
+
+  std::unordered_map<std::string, cv::VideoCapture> video_captures_;
 };
 
 #endif  // STEREO_ARM_TRACK_FRAME_GRABBER_H_

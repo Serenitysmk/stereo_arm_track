@@ -3,11 +3,12 @@
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
+#include <opencv2/aruco.hpp>
 #include <opencv2/opencv.hpp>
 
 #include <util/misc.h>
 
-#include "src/frame_grabber.h"
+#include "src/controller.h"
 
 using namespace colmap;
 
@@ -16,21 +17,25 @@ using namespace colmap;
 ////////////////////////////////////////////////////////////////////////////////
 
 DEFINE_int32(num_cameras, 4, "Number of cameras.");
-DEFINE_string(
-    camera_list,
-    "7L03E0EPAK00002, 7L03E0EPAK00005, 7L03E0EPAK00022, 7L03E0EPAK00026",
-    "Used camera serial numbers");
 // DEFINE_string(
 //     camera_list,
-//     "7L03E0EPAK00022",
+//     "7L03E0EPAK00002, 7L03E0EPAK00005, 7L03E0EPAK00022, 7L03E0EPAK00026",
 //     "Used camera serial numbers");
-DEFINE_bool(record, true, "Is recording?");
-DEFINE_string(output_video_path, "../data/videos",
+DEFINE_string(camera_list, "7L03E0EPAK00022, 7L03E0EPAK00026",
+              "Used camera serial numbers");
+DEFINE_bool(record, false, "Is recording?");
+DEFINE_string(video_path, "../data/for_marker_detection",
               "Output path of the recorded videos");
+
+DEFINE_bool(marker_detection, true, "Test marker detection?");
 
 void RunTestFrameGrabber();
 
 void RunTestVideoRecord();
+
+void RunTestMarkerDetection();
+
+void DetectMarker(cv::Mat& img);
 
 int main(int argc, char** argv) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -38,6 +43,8 @@ int main(int argc, char** argv) {
 
   if (FLAGS_record) {
     RunTestVideoRecord();
+  } else if (FLAGS_marker_detection) {
+    RunTestMarkerDetection();
   } else {
     RunTestFrameGrabber();
   }
@@ -91,7 +98,65 @@ void RunTestVideoRecord() {
     return;
   }
 
-  grabber.Record(FLAGS_output_video_path, std::chrono::seconds(10), 25.0);
+  grabber.Record(FLAGS_video_path, std::chrono::seconds(10), 25.0);
 
   grabber.Close();
+}
+
+void RunTestMarkerDetection() {
+  ControllerOptions options;
+  options.num_cameras = FLAGS_num_cameras;
+  options.camera_list = FLAGS_camera_list;
+  options.input_from_videos = true;
+  options.video_path = FLAGS_video_path;
+
+  Controller controller(&options);
+
+  controller.Run();
+
+  return;
+}
+
+void DetectMarker(cv::Mat& img) {
+  std::vector<int> marker_ids;
+  std::vector<std::vector<cv::Point2f>> marker_corners;
+  cv::Ptr<cv::aruco::DetectorParameters> params =
+      cv::aruco::DetectorParameters::create();
+  cv::Ptr<cv::aruco::Dictionary> dict =
+      cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_1000);
+
+  cv::aruco::detectMarkers(img, dict, marker_corners, marker_ids, params);
+
+  cv::aruco::drawDetectedMarkers(img, marker_corners, marker_ids);
+
+  cv::Mat gray;
+  if (img.channels() == 3) {
+    cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
+  } else {
+    gray = img;
+  }
+
+  for (auto& marker : marker_corners) {
+    cv::cornerSubPix(
+        gray, marker, cv::Size(7, 7), cv::Size(-1, -1),
+        cv::TermCriteria(cv::TermCriteria::COUNT | cv::TermCriteria::EPS, 200,
+                         1e-10));
+  }
+
+  std::cout << "Detected marker ids: " << std::endl;
+  std::cout << "[";
+  for (const int& id : marker_ids) {
+    std::cout << id << " ";
+  }
+  std::cout << "]" << std::endl;
+
+  std::cout << "Detected marker corners: " << std::endl;
+
+  std::cout << "[";
+  for (const auto& marker : marker_corners) {
+    for (const cv::Point2f& point : marker) {
+      std::cout << point << " ";
+    }
+  }
+  std::cout << "]" << std::endl;
 }
