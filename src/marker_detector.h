@@ -1,6 +1,7 @@
 #ifndef SRC_MARKER_DETECTOR_H_
 #define SRC_MARKER_DETECTOR_H_
 
+#include <condition_variable>
 #include <mutex>
 #include <thread>
 #include <unordered_map>
@@ -23,15 +24,22 @@ class MarkerDetector {
   void Stop();
 
  protected:
+  void DetectorLoop(const std::string& serial_number);
+
+  bool DetectMarkerImpl(
+      const cv::Mat& image,
+      const cv::Ptr<cv::aruco::DetectorParameters>& detector_params,
+      const cv::Ptr<cv::aruco::Dictionary>& dict,
+      std::vector<cv::Point2f>& results);
+
   // Aruco dictionary name.
   const cv::aruco::PREDEFINED_DICTIONARY_NAME dict_name_;
 
-  // Aruco detection parameters
-  std::unordered_map<std::string, cv::Ptr<cv::aruco::DetectorParameters>>
-      detector_params_;
-
   // Aruco detection workers.
-  std::unordered_map<std::string, std::thread> thread_pool_;
+  std::unordered_map<std::string, std::thread> workers_;
+
+  // Images.
+  std::unordered_map<std::string, cv::Mat> images_;
 
   // Detection results.
   std::unordered_map<std::string, std::vector<cv::Point2f>> results_;
@@ -42,6 +50,10 @@ class MarkerDetector {
   // Mutex.
   std::mutex get_frame_mutex_;
   std::mutex write_results_mutex_;
+
+  // Condition variables.
+  int detect_finished_ = 0;
+  std::condition_variable detect_finish_condition_;
 
   const std::vector<std::string> camera_list_;
 };
