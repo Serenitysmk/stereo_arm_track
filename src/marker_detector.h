@@ -36,7 +36,7 @@ class MarkerDetector {
   const cv::aruco::PREDEFINED_DICTIONARY_NAME dict_name_;
 
   // Aruco detection workers.
-  std::unordered_map<std::string, std::thread> workers_;
+  std::unordered_map<std::string, std::thread*> workers_;
 
   // Images.
   std::unordered_map<std::string, cv::Mat> images_;
@@ -50,10 +50,13 @@ class MarkerDetector {
   // Mutex.
   std::mutex get_frame_mutex_;
   std::mutex write_results_mutex_;
+  std::mutex request_stop_mutex_;
 
   // Condition variables.
+  std::unordered_map<std::string, bool> new_frame_arrived_;
   int detect_finished_ = 0;
   std::condition_variable detect_finish_condition_;
+  bool stop_detector_ = false;
 
   const std::vector<std::string> camera_list_;
 };

@@ -114,6 +114,7 @@ void RunTestMarkerDetection() {
 
   controller.Run();
 
+  controller.Shutdown();
   return;
 }
 

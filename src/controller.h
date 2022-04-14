@@ -31,8 +31,12 @@ class Controller {
 
   void Run();
 
+  void Shutdown();
+
  private:
   const ControllerOptions* options_;
+
+  std::vector<std::string> camera_lists_;
 
   // Frame grabber.
   FrameGrabber* grabber_;
