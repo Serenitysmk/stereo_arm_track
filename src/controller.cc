@@ -30,7 +30,6 @@ Controller::Controller(const ControllerOptions* options) : options_(options) {
   // Initialize detectror.
   detector_ = new MarkerDetector(camera_lists_, cv::aruco::DICT_6X6_1000);
 
-  detector_->Init();
 }
 
 void Controller::Run() {
@@ -76,6 +75,4 @@ void Controller::Shutdown() {
     std::cerr << "ERROR: Failed to close the frame grabber!" << std::endl;
     return;
   }
-
-  detector_->Stop();
 }
