@@ -58,6 +58,13 @@ void Controller::Run() {
 
     detector_->Detect(frames, markers, detection_success);
 
+    for(const std::string& serial_number: camera_lists_){
+      if(detection_success.at(serial_number)){
+        std::cout << serial_number << " detection success!" << std::endl;
+      }else{
+        std::cout << serial_number << " detection failed" << std::endl;
+      }
+    }
     for (const auto& marker : markers) {
       std::cout << marker.first << ": ";
       for (const auto& point : marker.second) {

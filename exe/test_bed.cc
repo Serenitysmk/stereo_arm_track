@@ -17,17 +17,17 @@ using namespace colmap;
 ////////////////////////////////////////////////////////////////////////////////
 
 DEFINE_int32(num_cameras, 4, "Number of cameras.");
-// DEFINE_string(
-//     camera_list,
-//     "7L03E0EPAK00002, 7L03E0EPAK00005, 7L03E0EPAK00022, 7L03E0EPAK00026",
-//     "Used camera serial numbers");
-DEFINE_string(camera_list, "7L03E0EPAK00022, 7L03E0EPAK00026",
-              "Used camera serial numbers");
-DEFINE_bool(record, false, "Is recording?");
-DEFINE_string(video_path, "../data/for_marker_detection",
+DEFINE_string(
+    camera_list,
+    "7L03E0EPAK00002, 7L03E0EPAK00005, 7L03E0EPAK00022, 7L03E0EPAK00026",
+    "Used camera serial numbers");
+// DEFINE_string(camera_list, "7L03E0EPAK00022, 7L03E0EPAK00026",
+//               "Used camera serial numbers");
+DEFINE_bool(record, true, "Is recording?");
+DEFINE_string(video_path, "../data/videos",
               "Output path of the recorded videos");
 
-DEFINE_bool(marker_detection, true, "Test marker detection?");
+DEFINE_bool(marker_detection, false, "Test marker detection?");
 
 void RunTestFrameGrabber();
 
