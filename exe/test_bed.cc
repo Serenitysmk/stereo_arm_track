@@ -107,7 +107,7 @@ void RunTestMarkerDetection() {
   ControllerOptions options;
   options.num_cameras = FLAGS_num_cameras;
   options.camera_list = FLAGS_camera_list;
-  options.input_from_videos = true;
+  options.input_from_videos = false;
   options.video_path = FLAGS_video_path;
 
   Controller controller(&options);
