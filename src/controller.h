@@ -3,11 +3,14 @@
 
 #include <thread>
 
+#include <base/camera.h>
+#include <base/pose.h>
 #include <util/logging.h>
 #include <util/misc.h>
 
 #include "src/frame_grabber.h"
 #include "src/marker_detector.h"
+#include "src/triangulator.h"
 #include "src/viewer.h"
 
 struct ControllerOptions {
@@ -53,9 +56,16 @@ class Controller {
 
   // Viewer.
   Viewer* viewer_;
-  
-  // Arm tracker.
-  
+
+  // Marker triangulator.
+  Triangulator* triangulator_;
+
+  // Cameras.
+  std::unordered_map<std::string, colmap::Camera> cameras_;
+
+  // Camera poses.
+  std::unordered_map<std::string, Eigen::Vector4d> qvecs_;
+  std::unordered_map<std::string, Eigen::Vector3d> tvecs_;
 
   bool stop_running_ = false;
 };

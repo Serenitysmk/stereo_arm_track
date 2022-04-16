@@ -30,6 +30,9 @@ Controller::Controller(const ControllerOptions* options) : options_(options) {
   // Initialize detectror.
   detector_ = new MarkerDetector(camera_lists_, cv::aruco::DICT_4X4_1000);
 
+  // Initialize triangulator.
+  triangulator_ = new Triangulator(camera_lists_);
+
   // Initialize viewer.
   viewer_ = new Viewer(camera_lists_, options_->display_scale);
 }
