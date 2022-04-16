@@ -44,6 +44,9 @@ class Controller {
  private:
   void StopRunningControlLoop();
 
+  // Load camera information, including the intrinsic parameters and extrinsic parameters.
+  colmap::Camera LoadCameraInfo(const std::string& path);
+
   const ControllerOptions* options_;
 
   std::vector<std::string> camera_lists_;

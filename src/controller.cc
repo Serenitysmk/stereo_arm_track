@@ -102,3 +102,11 @@ void Controller::StopRunningControlLoop() {
     }
   }
 }
+
+colmap::Camera Controller::LoadCameraInfo(const std::string& path) {
+  std::ifstream file(path);
+  CHECK(file.is_open()) << "ERROR: Cannot load camera information from: "
+                        << path;
+
+  
+}
