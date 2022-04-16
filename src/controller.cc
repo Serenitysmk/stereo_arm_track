@@ -28,17 +28,18 @@ Controller::Controller(const ControllerOptions* options) : options_(options) {
   CHECK(grabber_->Init()) << "ERROR: Failed to initialize the frame grabber!";
 
   // Initialize detectror.
-  detector_ = new MarkerDetector(camera_lists_, cv::aruco::DICT_4X4_1000);
+  detector_ = new MarkerDetector(camera_lists_, cv::aruco::DICT_6X6_1000);
 
   // Initialize viewer.
   viewer_ = new Viewer(camera_lists_, options_->display_scale);
 }
 
 void Controller::Run() {
+  std::thread running_control_thread(&Controller::StopRunningControlLoop, this);
   PrintHeading1("Start running ...");
 
   size_t frame_cnt = 0;
-  while (true) {
+  while (!stop_running_) {
     // Grab new frames.
     bool grab_success = true;
     std::unordered_map<std::string, cv::Mat> frames = grabber_->Next();
@@ -67,18 +68,17 @@ void Controller::Run() {
         std::cout << serial_number << " detection failed" << std::endl;
       }
     }
-    // for (const auto& marker : markers) {
-    //   std::cout << marker.first << ": ";
-    //   for (const auto& point : marker.second) {
-    //     std::cout << point << " ";
-    //   }
-    //   std::cout << std::endl;
-    // }
+
     Marker marker;
     marker.observations = markers_corners;
     viewer_->AddCurrentFrame(frames, marker);
     frame_cnt++;
   }
+
+  stop_running_ = true;
+  running_control_thread.detach();
+
+  viewer_->Close();
 }
 
 void Controller::Shutdown() {
@@ -86,5 +86,16 @@ void Controller::Shutdown() {
   if (!grabber_->Close()) {
     std::cerr << "ERROR: Failed to close the frame grabber!" << std::endl;
     return;
+  }
+}
+
+void Controller::StopRunningControlLoop() {
+  char key;
+  while (!stop_running_) {
+    std::cin >> key;
+    if ((int)key == 27) {
+      stop_running_ = true;
+      break;
+    }
   }
 }

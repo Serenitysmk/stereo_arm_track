@@ -1,6 +1,8 @@
 #ifndef SRC_CONTROLLER_H_
 #define SRC_CONTROLLER_H_
 
+#include <thread>
+
 #include <util/logging.h>
 #include <util/misc.h>
 
@@ -37,6 +39,8 @@ class Controller {
   void Shutdown();
 
  private:
+  void StopRunningControlLoop();
+
   const ControllerOptions* options_;
 
   std::vector<std::string> camera_lists_;
@@ -49,6 +53,8 @@ class Controller {
 
   // Viewer.
   Viewer* viewer_;
+
+  bool stop_running_ = false;
 };
 
 #endif  // STEREO_ARM_TRACK_CONTROLLER_H_
