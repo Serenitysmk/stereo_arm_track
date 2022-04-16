@@ -25,7 +25,29 @@ void Viewer::Close() {
 }
 
 void Viewer::ThreadLoop() {
-  while (viewer_running_) {
+  pangolin::CreateWindowAndBind("Tracker", 1024, 768);
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  pangolin::OpenGlRenderState viewer_camera(
+      pangolin::ProjectionMatrix(1024, 768, 400, 400, 512, 384, 0.1, 1000),
+      pangolin::ModelViewLookAt(0, -5, -10, 0, 0, 0, 0.0, -1.0, 0.0));
+
+  // Add named OpenGL viewport to window and provide 3D Handler.
+  pangolin::View& vis_display =
+      pangolin::CreateDisplay()
+          .SetBounds(0.0, 1.0, 0.0, 1.0, -1024.0f / 768.0f)
+          .SetHandler(new pangolin::Handler3D(viewer_camera));
+
+  const float blue[3] = {0, 0, 1};
+  const float green[3] = {0, 1, 0};
+
+  while (!pangolin::ShouldQuit() && viewer_running_) {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    vis_display.Activate(viewer_camera);
+
     std::unique_lock<std::mutex> lock(viewer_data_mutex_);
     if (new_frame_arrived_) {
       cv::Mat img = DrawFrameImage();
@@ -41,6 +63,7 @@ void Viewer::ThreadLoop() {
       }
     }
 
+    pangolin::FinishFrame();
     new_frame_arrived_ = false;
   }
 }
