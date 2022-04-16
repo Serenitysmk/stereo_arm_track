@@ -1,4 +1,4 @@
-#include "controller.h"
+#include "src/controller.h"
 
 using namespace colmap;
 

@@ -53,6 +53,9 @@ class Controller {
 
   // Viewer.
   Viewer* viewer_;
+  
+  // Arm tracker.
+  
 
   bool stop_running_ = false;
 };

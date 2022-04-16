@@ -3,6 +3,7 @@ set(SRCS
 frame_grabber.h frame_grabber.cc
 marker.h marker.cc
 marker_detector.h marker_detector.cc
+triangulator.h triangulator.cc
 viewer.h viewer.cc
 controller.h controller.cc
 )
