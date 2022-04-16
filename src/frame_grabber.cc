@@ -507,17 +507,9 @@ bool FrameGrabber::InitCameras() {
     }
 
     // Load camera config files.
-    std::stringstream stream;
-    stream << "../config/" << serial_number << ".mvcfg";
-    const std::string config_path = stream.str();
-    IMV_ErrorList error_list;
-    ret = IMV_LoadDeviceCfg(dev_handle, config_path.c_str(), &error_list);
-
-    if (ret != IMV_OK) {
-      std::cerr << "ERROR: Load camera configuration failed! Error code " << ret
-                << std::endl;
-      return false;
-    }
+    ret = IMV_SetEnumFeatureSymbol(dev_handle, "UserSetSelector", "UserSet1");
+    ret = IMV_ExecuteCommandFeature(dev_handle, "UserSetLoad");
+    ret = IMV_SetEnumFeatureSymbol(dev_handle, "UserSetDefault", "UserSet1");
 
     // Attach callback function.
     ret = IMV_AttachGrabbing(dev_handle, OnFrameGrabbed, (void*)dev_handle);
