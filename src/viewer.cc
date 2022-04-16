@@ -19,6 +19,7 @@ void Viewer::AddCurrentFrame(
 }
 
 void Viewer::Close() {
+  cv::destroyAllWindows();
   viewer_running_ = false;
   viewer_thread_.join();
 }
