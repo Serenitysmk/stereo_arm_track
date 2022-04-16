@@ -1,5 +1,7 @@
 #include "src/triangulator.h"
 
+#include <iostream>
+
 using namespace colmap;
 
 Triangulator::Triangulator(const std::vector<std::string>& camera_list)
