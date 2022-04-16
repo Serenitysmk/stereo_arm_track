@@ -6,7 +6,7 @@
 
 #include "src/frame_grabber.h"
 #include "src/marker_detector.h"
-#include "src/visualizer.h"
+#include "src/viewer.h"
 
 struct ControllerOptions {
   // Number of cameras.
@@ -44,8 +44,8 @@ class Controller {
   // Marker detector.
   MarkerDetector* detector_;
 
-  // Visualizer.
-  Visualizer* visualizer_;
+  // Viewer.
+  Viewer* viewer_;
 };
 
 #endif  // STEREO_ARM_TRACK_CONTROLLER_H_
