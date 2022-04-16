@@ -33,8 +33,20 @@ Controller::Controller(const ControllerOptions* options) : options_(options) {
   // Initialize triangulator.
   triangulator_ = new Triangulator(camera_lists_);
 
+  // Initialize cameras.
+  for (const std::string& sn : camera_lists_) {
+    Camera camera;
+    Eigen::Vector4d qvec;
+    Eigen::Vector3d tvec;
+    const std::string path = JoinPaths("../config", sn + "_calibration.txt");
+    LoadCameraInfo(path, camera, qvec, tvec);
+    cameras_.emplace(sn, camera);
+    qvecs_.emplace(sn, qvec);
+    tvecs_.emplace(sn, tvec);
+  }
+
   // Initialize viewer.
-  viewer_ = new Viewer(camera_lists_, options_->display_scale);
+  viewer_ = new Viewer(camera_lists_, qvecs_, tvecs_, options_->display_scale);
 }
 
 void Controller::Run() {
@@ -47,8 +59,8 @@ void Controller::Run() {
     bool grab_success = true;
     std::unordered_map<std::string, cv::Mat> frames = grabber_->Next();
 
-    for (const std::string& serial_number : camera_lists_) {
-      if (frames.at(serial_number).empty()) {
+    for (const std::string& sn : camera_lists_) {
+      if (frames.at(sn).empty()) {
         grab_success = false;
       }
     }
@@ -64,11 +76,11 @@ void Controller::Run() {
 
     detector_->Detect(frames, markers_corners, detection_success);
 
-    for (const std::string& serial_number : camera_lists_) {
-      if (detection_success.at(serial_number)) {
-        std::cout << serial_number << " detection success!" << std::endl;
+    for (const std::string& sn : camera_lists_) {
+      if (detection_success.at(sn)) {
+        std::cout << sn << " detection success!" << std::endl;
       } else {
-        std::cout << serial_number << " detection failed" << std::endl;
+        std::cout << sn << " detection failed" << std::endl;
       }
     }
 
@@ -103,10 +115,80 @@ void Controller::StopRunningControlLoop() {
   }
 }
 
-colmap::Camera Controller::LoadCameraInfo(const std::string& path) {
+void Controller::LoadCameraInfo(const std::string& path, Camera& camera,
+                                Eigen::Vector4d& qvec, Eigen::Vector3d& tvec) {
   std::ifstream file(path);
   CHECK(file.is_open()) << "ERROR: Cannot load camera information from: "
                         << path;
 
-  
+  std::string line;
+  std::string item;
+  std::stringstream line_stream;
+
+  size_t width = 0;
+  size_t height = 0;
+  std::vector<double> params;
+  params.reserve(8);
+
+  // Skip headers.
+  std::getline(file, line);
+  std::getline(file, line);
+
+  std::getline(file, line);
+  line_stream = std::stringstream(line);
+  std::getline(line_stream, item, ' ');
+  width = std::stoi(item);
+  std::getline(line_stream, item, ' ');
+  height = std::stoi(item);
+
+  // Focal lengths.
+  std::getline(file, line);
+  std::getline(file, line);
+  line_stream = std::stringstream(line);
+  for (int i = 0; i < 2; i++) {
+    std::getline(line_stream, item, ' ');
+    params.emplace_back(std::stold(item));
+  }
+
+  // Principal points.
+  std::getline(file, line);
+  std::getline(file, line);
+  line_stream = std::stringstream(line);
+  for (int i = 0; i < 2; i++) {
+    std::getline(line_stream, item, ' ');
+    params.emplace_back(std::stold(item));
+  }
+
+  // Distortion parameters [k1, k2, p1, p2].
+  std::getline(file, line);
+  std::getline(file, line);
+  line_stream = std::stringstream(line);
+  for (int i = 0; i < 4; i++) {
+    std::getline(line_stream, item, ' ');
+    params.emplace_back(std::stold(item));
+  }
+
+  // Rotation [QW, QX, QY, QZ].
+  std::getline(file, line);
+  std::getline(file, line);
+  line_stream = std::stringstream(line);
+  for (int i = 0; i < 4; i++) {
+    std::getline(line_stream, item, ' ');
+    qvec[i] = std::stold(item);
+  }
+  qvec.normalize();
+
+  // Translation [TX, TY, TZ].
+  std::getline(file, line);
+  std::getline(file, line);
+  line_stream = std::stringstream(line);
+  for (int i = 0; i < 3; i++) {
+    std::getline(line_stream, item, ' ');
+    tvec[i] = std::stold(item);
+  }
+
+  camera.SetWidth(width);
+  camera.SetHeight(height);
+  camera.SetModelIdFromName("OPENCV");
+  camera.SetParams(params);
 }

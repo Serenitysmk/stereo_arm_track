@@ -1,4 +1,6 @@
 # Calibration information of the camera.
+# Width and height
+2048 1536
 # Focal lengths
 1693.7672270890089 1688.2854638696317
 # Principal points
@@ -8,4 +10,4 @@
 # Rotation [QW, QX, QY, QZ]
 0.71306 -0.025945 0.699926 0.0312457
 # Translation [TX, TY, TZ]
--0.293375 -0.0208786 0.297574
+-293.375 -20.8786 297.574

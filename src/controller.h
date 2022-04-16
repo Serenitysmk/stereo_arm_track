@@ -44,12 +44,21 @@ class Controller {
  private:
   void StopRunningControlLoop();
 
-  // Load camera information, including the intrinsic parameters and extrinsic parameters.
-  colmap::Camera LoadCameraInfo(const std::string& path);
+  // Load camera information, including the intrinsic parameters and extrinsic
+  // parameters.
+  void LoadCameraInfo(const std::string& path, colmap::Camera& camera,
+                      Eigen::Vector4d& qvec, Eigen::Vector3d& tvec);
 
   const ControllerOptions* options_;
 
   std::vector<std::string> camera_lists_;
+
+  // Cameras.
+  std::unordered_map<std::string, colmap::Camera> cameras_;
+
+  // Camera poses.
+  std::unordered_map<std::string, Eigen::Vector4d> qvecs_;
+  std::unordered_map<std::string, Eigen::Vector3d> tvecs_;
 
   // Frame grabber.
   FrameGrabber* grabber_;
@@ -62,13 +71,6 @@ class Controller {
 
   // Marker triangulator.
   Triangulator* triangulator_;
-
-  // Cameras.
-  std::unordered_map<std::string, colmap::Camera> cameras_;
-
-  // Camera poses.
-  std::unordered_map<std::string, Eigen::Vector4d> qvecs_;
-  std::unordered_map<std::string, Eigen::Vector3d> tvecs_;
 
   bool stop_running_ = false;
 };

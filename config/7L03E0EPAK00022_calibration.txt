@@ -1,4 +1,6 @@
 # Calibration information of the camera.
+# Width and height
+2048 1536
 # Focal lengths
 1693.7672270890089 1688.2854638696317
 # Principal points

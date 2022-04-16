@@ -12,21 +12,19 @@ MarkerDetector::MarkerDetector(
     : camera_list_(camera_list) {
   params_ = cv::aruco::DetectorParameters::create();
   dict_ = cv::aruco::getPredefinedDictionary(dict_name);
-
-  //params_->minMarkerPerimeterRate = 0.001;
+  
 }
 
 void MarkerDetector::Detect(
     const std::unordered_map<std::string, cv::Mat>& images,
     std::unordered_map<std::string, std::vector<cv::Point2f>>& results,
     std::unordered_map<std::string, bool>& is_success) {
-  for (const std::string& serial_number : camera_list_) {
+  for (const std::string& sn : camera_list_) {
     std::vector<cv::Point2f> result;
-    bool success =
-        DetectMarkerImpl(images.at(serial_number), params_, dict_, result);
-    is_success.emplace(serial_number, success);
+    bool success = DetectMarkerImpl(images.at(sn), params_, dict_, result);
+    is_success.emplace(sn, success);
     if (success) {
-      results.emplace(serial_number, result);
+      results.emplace(sn, result);
     }
   }
 }

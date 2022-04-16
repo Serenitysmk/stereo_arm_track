@@ -14,7 +14,10 @@
 
 class Viewer {
  public:
-  Viewer(const std::vector<std::string>& camera_list, const double display_scale);
+  Viewer(const std::vector<std::string>& camera_list,
+         const std::unordered_map<std::string, Eigen::Vector4d>& qvecs,
+         const std::unordered_map<std::string, Eigen::Vector3d>& tvecs,
+         const double display_scale);
 
   void AddCurrentFrame(
       const std::unordered_map<std::string, cv::Mat>& current_frames,
@@ -27,7 +30,13 @@ class Viewer {
 
   cv::Mat DrawFrameImage();
 
+  void PlotFrame(const Eigen::Vector4d& qvec, const Eigen::Vector3d& tvec, const float* color);
+
   const std::vector<std::string> camera_list_;
+
+  const std::unordered_map<std::string, Eigen::Vector4d> qvecs_; 
+  
+  const std::unordered_map<std::string, Eigen::Vector3d> tvecs_;
 
   const double display_scale_;
 

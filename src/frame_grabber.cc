@@ -186,17 +186,17 @@ std::unordered_map<std::string, cv::Mat> FrameGrabber::Next() {
   std::unordered_map<std::string, cv::Mat> grabbed_frames;
 
   if (grab_from_videos_) {
-    for (const std::string& serial_number : camera_list_) {
+    for (const std::string& sn : camera_list_) {
       cv::Mat frame;
-      video_captures_.at(serial_number) >> frame;
-      grabbed_frames.emplace(serial_number, frame);
+      video_captures_.at(sn) >> frame;
+      grabbed_frames.emplace(sn, frame);
     }
   } else {
     NextImpl();
 
-    for (const std::string& serial_number : camera_list_) {
-      IMV_HANDLE dev_handle = device_handles_.at(serial_number);
-      grabbed_frames.emplace(serial_number, g_grabbed_frames.at(dev_handle));
+    for (const std::string& sn : camera_list_) {
+      IMV_HANDLE dev_handle = device_handles_.at(sn);
+      grabbed_frames.emplace(sn, g_grabbed_frames.at(dev_handle));
     }
   }
 
@@ -223,10 +223,9 @@ void FrameGrabber::Record(
 
   std::unordered_map<IMV_HANDLE, IMV_RecordParam> record_params;
 
-  for (const std::string& serial_number : camera_list_) {
-    IMV_HANDLE dev_handle = device_handles_.at(serial_number);
-    output_paths.insert(std::make_pair(
-        serial_number, JoinPaths(output_dir, serial_number + ".avi")));
+  for (const std::string& sn : camera_list_) {
+    IMV_HANDLE dev_handle = device_handles_.at(sn);
+    output_paths.insert(std::make_pair(sn, JoinPaths(output_dir, sn + ".avi")));
     int64_t width = 0;
     int64_t height = 0;
 
@@ -240,13 +239,13 @@ void FrameGrabber::Record(
     record_param.fFameRate = (float)frame_rate;
     record_param.nQuality = 50;
     record_param.recordFormat = typeVideoFormatAVI;
-    record_param.pRecordFilePath = output_paths.at(serial_number).c_str();
+    record_param.pRecordFilePath = output_paths.at(sn).c_str();
 
     record_params.emplace(dev_handle, record_param);
   }
 
-  for (const std::string& serial_number : camera_list_) {
-    IMV_HANDLE dev_handle = device_handles_.at(serial_number);
+  for (const std::string& sn : camera_list_) {
+    IMV_HANDLE dev_handle = device_handles_.at(sn);
     int ret = IMV_OK;
     ret = IMV_AttachGrabbing(dev_handle, OnFrameGrabbedAndRecord,
                              (void*)dev_handle);
@@ -275,20 +274,6 @@ void FrameGrabber::Record(
     auto grab_start = std::chrono::high_resolution_clock::now();
 
     NextImpl();
-
-    // for (const std::string& serial_number : camera_list_) {
-    //   IMV_HANDLE dev_handle = device_handles_.at(serial_number);
-    //   IMV_RecordFrameInfoParam record_frame_param;
-    //   IMV_Frame* frame = g_grabbed_frames.at(dev_handle);
-    //   record_frame_param.pData = frame->pData;
-    //   record_frame_param.nDataLen = frame->frameInfo.size;
-    //   record_frame_param.nPaddingX = frame->frameInfo.paddingX;
-    //   record_frame_param.nPaddingY = frame->frameInfo.paddingY;
-    //   record_frame_param.ePixelFormat = frame->frameInfo.pixelFormat;
-
-    //   // Record one frame.
-    //   IMV_InputOneFrame(dev_handle, &record_frame_param);
-    // }
 
     auto current_time = std::chrono::high_resolution_clock::now();
     report_time = std::chrono::duration_cast<std::chrono::seconds>(
@@ -321,8 +306,8 @@ void FrameGrabber::Record(
   std::cout << "Video recording stopped, time: " << recorded_time << " minutes"
             << std::endl;
 
-  for (const std::string& serial_number : camera_list_) {
-    IMV_CloseRecord(device_handles_.at(serial_number));
+  for (const std::string& sn : camera_list_) {
+    IMV_CloseRecord(device_handles_.at(sn));
   }
 
   return;
@@ -337,8 +322,8 @@ bool FrameGrabber::Close() {
   }
 
   int ret = IMV_OK;
-  for (const std::string& serial_number : camera_list_) {
-    IMV_HANDLE dev_handle = device_handles_.at(serial_number);
+  for (const std::string& sn : camera_list_) {
+    IMV_HANDLE dev_handle = device_handles_.at(sn);
     if (dev_handle == nullptr) {
       continue;
     }
@@ -359,7 +344,7 @@ bool FrameGrabber::Close() {
                   << std::endl;
         return false;
       }
-      std::cout << "Camera " << serial_number << " closed" << std::endl;
+      std::cout << "Camera " << sn << " closed" << std::endl;
     }
   }
   return true;
@@ -474,8 +459,8 @@ int FrameGrabber::SetSoftTriggerConf(IMV_HANDLE dev_handle) {
 
 void FrameGrabber::ExecuteTriggerSoft() {
   int ret = IMV_OK;
-  for (const std::string& serial_number : camera_list_) {
-    IMV_HANDLE dev_handle = device_handles_.at(serial_number);
+  for (const std::string& sn : camera_list_) {
+    IMV_HANDLE dev_handle = device_handles_.at(sn);
     ret = IMV_ExecuteCommandFeature(dev_handle, "TriggerSoftware");
     if (ret != IMV_OK) {
       std::cerr << "WARNING: Execute TriggerSoftware failed! Error code " << ret
@@ -486,19 +471,19 @@ void FrameGrabber::ExecuteTriggerSoft() {
 
 bool FrameGrabber::InitCameras() {
   // Open cameras.
-  for (const std::string& serial_number : camera_list_) {
+  for (const std::string& sn : camera_list_) {
     int ret = IMV_OK;
 
-    IMV_HANDLE dev_handle = device_handles_.at(serial_number);
+    IMV_HANDLE dev_handle = device_handles_.at(sn);
 
     ret = IMV_Open(dev_handle);
     if (ret != IMV_OK) {
-      std::cerr << "ERROR: Open camera " << serial_number
-                << " failed! Error code " << ret << std::endl;
+      std::cerr << "ERROR: Open camera " << sn << " failed! Error code " << ret
+                << std::endl;
       return false;
     }
 
-    std::cout << "Camera " << serial_number << " opened" << std::endl;
+    std::cout << "Camera " << sn << " opened" << std::endl;
 
     // Set software trigger config.
     ret = SetSoftTriggerConf(dev_handle);
@@ -533,14 +518,14 @@ bool FrameGrabber::InitCameras() {
 bool FrameGrabber::InitVideoCaptures() {
   PrintHeading2("Initialize video captures");
 
-  for (const std::string& serial_number : camera_list_) {
-    cv::VideoCapture video(JoinPaths(input_path_, serial_number + ".avi"));
+  for (const std::string& sn : camera_list_) {
+    cv::VideoCapture video(JoinPaths(input_path_, sn + ".avi"));
     if (!video.isOpened()) {
-      std::cerr << "ERROR: Failed to initialize video capture for "
-                << serial_number << std::endl;
+      std::cerr << "ERROR: Failed to initialize video capture for " << sn
+                << std::endl;
       return false;
     }
-    video_captures_.emplace(serial_number, video);
+    video_captures_.emplace(sn, video);
   }
   return true;
 }
