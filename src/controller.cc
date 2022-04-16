@@ -30,6 +30,8 @@ Controller::Controller(const ControllerOptions* options) : options_(options) {
   // Initialize detectror.
   detector_ = new MarkerDetector(camera_lists_, cv::aruco::DICT_4X4_1000);
 
+  // Initialize viewer.
+  viewer_ = new Viewer(camera_lists_, options_->display_scale);
 }
 
 void Controller::Run() {
@@ -53,25 +55,28 @@ void Controller::Run() {
     // Grab success.
     std::cout << "frame: " << frame_cnt << std::endl;
 
-    std::unordered_map<std::string, std::vector<cv::Point2f>> markers;
+    std::unordered_map<std::string, std::vector<cv::Point2f>> markers_corners;
     std::unordered_map<std::string, bool> detection_success;
 
-    detector_->Detect(frames, markers, detection_success);
+    detector_->Detect(frames, markers_corners, detection_success);
 
-    for(const std::string& serial_number: camera_lists_){
-      if(detection_success.at(serial_number)){
+    for (const std::string& serial_number : camera_lists_) {
+      if (detection_success.at(serial_number)) {
         std::cout << serial_number << " detection success!" << std::endl;
-      }else{
+      } else {
         std::cout << serial_number << " detection failed" << std::endl;
       }
     }
-    for (const auto& marker : markers) {
-      std::cout << marker.first << ": ";
-      for (const auto& point : marker.second) {
-        std::cout << point << " ";
-      }
-      std::cout << std::endl;
-    }
+    // for (const auto& marker : markers) {
+    //   std::cout << marker.first << ": ";
+    //   for (const auto& point : marker.second) {
+    //     std::cout << point << " ";
+    //   }
+    //   std::cout << std::endl;
+    // }
+    Marker marker;
+    marker.observations = markers_corners;
+    viewer_->AddCurrentFrame(frames, marker);
     frame_cnt++;
   }
 }

@@ -17,7 +17,7 @@ class MarkerDetector {
       std::unordered_map<std::string, bool>& is_success);
 
  protected:
-    bool DetectMarkerImpl(
+  bool DetectMarkerImpl(
       const cv::Mat& image,
       const cv::Ptr<cv::aruco::DetectorParameters>& detector_params,
       const cv::Ptr<cv::aruco::Dictionary>& dict,

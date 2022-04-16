@@ -16,6 +16,9 @@ struct ControllerOptions {
   std::string camera_list =
       "7L03E0EPAK00002, 7L03E0EPAK00005, 7L03E0EPAK00022, 7L03E0EPAK00026";
 
+  // Scale when displaying the images.
+  double display_scale = 0.25;
+
   // Whether the input is video.
   bool input_from_videos = true;
 

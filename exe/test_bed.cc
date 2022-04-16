@@ -17,17 +17,18 @@ using namespace colmap;
 ////////////////////////////////////////////////////////////////////////////////
 
 DEFINE_int32(num_cameras, 4, "Number of cameras.");
-DEFINE_string(
-    camera_list,
-    "7L03E0EPAK00002, 7L03E0EPAK00005, 7L03E0EPAK00022, 7L03E0EPAK00026",
-    "Used camera serial numbers");
-// DEFINE_string(camera_list, "7L03E0EPAK00022, 7L03E0EPAK00026",
-//               "Used camera serial numbers");
+// DEFINE_string(
+//     camera_list,
+//     "7L03E0EPAK00002, 7L03E0EPAK00005, 7L03E0EPAK00022, 7L03E0EPAK00026",
+//     "Used camera serial numbers");
+DEFINE_string(camera_list, "7L03E0EPAK00022, 7L03E0EPAK00026",
+              "Used camera serial numbers");
 DEFINE_bool(record, false, "Is recording?");
-DEFINE_string(video_path, "../data/videos",
+DEFINE_string(video_path, "../data/for_marker_detection",
               "Output path of the recorded videos");
-
+DEFINE_bool(input_from_videos, false, "Grab frames from videos?");
 DEFINE_bool(marker_detection, false, "Test marker detection?");
+DEFINE_double(display_scale, 0.25, "Scale for image displaying");
 
 void RunTestFrameGrabber();
 
@@ -107,7 +108,8 @@ void RunTestMarkerDetection() {
   ControllerOptions options;
   options.num_cameras = FLAGS_num_cameras;
   options.camera_list = FLAGS_camera_list;
-  options.input_from_videos = false;
+  options.display_scale = FLAGS_display_scale;
+  options.input_from_videos = FLAGS_input_from_videos;
   options.video_path = FLAGS_video_path;
 
   Controller controller(&options);

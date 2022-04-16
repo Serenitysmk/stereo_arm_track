@@ -7,6 +7,8 @@
 #include <Eigen/Core>
 #include <Eigen/Dense>
 
+#include <opencv2/core.hpp>
+
 struct Marker {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -16,7 +18,7 @@ struct Marker {
   std::vector<Eigen::Vector3d> positions;
 
   // Observations.
-  std::unordered_map<std::string, std::vector<Eigen::Vector2d>> observations;
+  std::unordered_map<std::string, std::vector<cv::Point2f>> observations;
 };
 
 class MarkerTrack {

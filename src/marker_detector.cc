@@ -13,7 +13,7 @@ MarkerDetector::MarkerDetector(
   params_ = cv::aruco::DetectorParameters::create();
   dict_ = cv::aruco::getPredefinedDictionary(dict_name);
 
-  params_->minMarkerPerimeterRate = 0.0001;
+  //params_->minMarkerPerimeterRate = 0.001;
 }
 
 void MarkerDetector::Detect(
@@ -25,7 +25,9 @@ void MarkerDetector::Detect(
     bool success =
         DetectMarkerImpl(images.at(serial_number), params_, dict_, result);
     is_success.emplace(serial_number, success);
-    results.emplace(serial_number, result);
+    if (success) {
+      results.emplace(serial_number, result);
+    }
   }
 }
 
@@ -37,9 +39,7 @@ bool MarkerDetector::DetectMarkerImpl(
   std::vector<int> marker_ids;
   std::vector<std::vector<cv::Point2f>> marker_corners;
 
-  cv::Mat img_resize;
-  cv::resize(image, img_resize, cv::Size(), 0.5, 0.5);
-  cv::aruco::detectMarkers(img_resize, dict, marker_corners, marker_ids,
+  cv::aruco::detectMarkers(image, dict, marker_corners, marker_ids,
                            detector_params);
 
   if (marker_ids.size() == 0) {
