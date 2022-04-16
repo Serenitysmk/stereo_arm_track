@@ -16,4 +16,5 @@ bool Triangulator::Triangulate(
               << std::endl;
     return false;
   }
+  return true;
 }
