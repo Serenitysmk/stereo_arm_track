@@ -28,7 +28,7 @@ void Viewer::ThreadLoop() {
     std::unique_lock<std::mutex> lock(viewer_data_mutex_);
     if (new_frame_arrived_) {
       cv::Mat img = DrawFrameImage();
-      std::cout << "drawing a frame" << std::endl;
+      
       if (display_scale_ != 1.0) {
         cv::Mat img_resize;
         cv::resize(img, img_resize, cv::Size(), display_scale_, display_scale_);
@@ -70,9 +70,6 @@ cv::Mat Viewer::DrawFrameImage() {
     }
     color.copyTo(
         img_show(cv::Range(0, height), cv::Range(i * width, (i + 1) * width)));
-
-    cv::imshow(camera_list_[i], color);
-    cv::waitKey(1);
   }
   return img_show;
 }

@@ -28,7 +28,7 @@ DEFINE_string(video_path, "../data/for_marker_detection",
               "Output path of the recorded videos");
 DEFINE_bool(input_from_videos, false, "Grab frames from videos?");
 DEFINE_bool(marker_detection, false, "Test marker detection?");
-DEFINE_double(display_scale, 0.25, "Scale for image displaying");
+DEFINE_double(display_scale, 0.5, "Scale for image displaying");
 
 void RunTestFrameGrabber();
 
