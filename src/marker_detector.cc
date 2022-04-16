@@ -12,6 +12,8 @@ MarkerDetector::MarkerDetector(
     : camera_list_(camera_list) {
   params_ = cv::aruco::DetectorParameters::create();
   dict_ = cv::aruco::getPredefinedDictionary(dict_name);
+
+  params_->minMarkerPerimeterRate = 0.0001;
 }
 
 void MarkerDetector::Detect(
@@ -35,7 +37,9 @@ bool MarkerDetector::DetectMarkerImpl(
   std::vector<int> marker_ids;
   std::vector<std::vector<cv::Point2f>> marker_corners;
 
-  cv::aruco::detectMarkers(image, dict, marker_corners, marker_ids,
+  cv::Mat img_resize;
+  cv::resize(image, img_resize, cv::Size(), 0.5, 0.5);
+  cv::aruco::detectMarkers(img_resize, dict, marker_corners, marker_ids,
                            detector_params);
 
   if (marker_ids.size() == 0) {
