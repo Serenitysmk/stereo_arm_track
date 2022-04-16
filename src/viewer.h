@@ -8,6 +8,8 @@
 
 #include <opencv2/core.hpp>
 
+#include <pangolin/pangolin.h>
+
 #include "src/marker.h"
 
 class Viewer {
