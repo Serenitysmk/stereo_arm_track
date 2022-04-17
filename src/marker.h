@@ -19,6 +19,8 @@ struct Marker {
 
   // Observations.
   std::unordered_map<std::string, std::vector<cv::Point2f>> observations;
+
+  Eigen::Vector3d center;
 };
 
 class MarkerTrack {

@@ -53,7 +53,6 @@ void Controller::Run() {
   std::thread running_control_thread(&Controller::StopRunningControlLoop, this);
   PrintHeading1("Start running ...");
 
-  size_t frame_cnt = 0;
   while (!stop_running_) {
     // Grab new frames.
     bool grab_success = true;
@@ -69,7 +68,6 @@ void Controller::Run() {
     }
 
     // Grab success.
-    std::cout << "frame: " << frame_cnt << std::endl;
 
     std::unordered_map<std::string, std::vector<cv::Point2f>> markers_corners;
     std::unordered_map<std::string, bool> detection_success;
@@ -86,8 +84,14 @@ void Controller::Run() {
 
     Marker marker;
     marker.observations = markers_corners;
+
+    // Triangulate marker.
+    bool tri_success =
+        triangulator_->Triangulate(cameras_, qvecs_, tvecs_, marker);
+
+    std::cout << "Triangulate success! marker center: "
+              << marker.center.transpose() << std::endl;
     viewer_->AddCurrentFrame(frames, marker);
-    frame_cnt++;
   }
 
   stop_running_ = true;

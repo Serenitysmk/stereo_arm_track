@@ -39,7 +39,7 @@ void Viewer::ThreadLoop() {
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  
+
   pangolin::OpenGlRenderState viewer_camera(
       pangolin::ProjectionMatrix(1024, 768, 400, 400, 512, 384, 0.1, 1000),
       pangolin::ModelViewLookAt(10, -5, -10, 0, 0, 50, 0.0, -1.0, 0.0));
@@ -50,8 +50,9 @@ void Viewer::ThreadLoop() {
           .SetBounds(0.0, 1.0, 0.0, 1.0, -1024.0f / 768.0f)
           .SetHandler(new pangolin::Handler3D(viewer_camera));
 
-  const float blue[3] = {0, 0, 1};
+  const float red[3] = {1, 0, 0};
   const float green[3] = {0, 1, 0};
+  const float blue[3] = {0, 0, 1};
 
   while (!pangolin::ShouldQuit() && viewer_running_) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -75,6 +76,8 @@ void Viewer::ThreadLoop() {
         cv::waitKey(1);
       }
     }
+
+    PlotMarker(current_marker_, red);
 
     pangolin::FinishFrame();
     new_frame_arrived_ = false;
@@ -179,4 +182,35 @@ void Viewer::PlotFrame(const Eigen::Vector4d& qvec, const Eigen::Vector3d& tvec,
 
   glEnd();
   glPopMatrix();
+}
+
+void Viewer::PlotMarker(const Marker& marker, const float* color) {
+  if (marker.positions.size() != 4) {
+    return;
+  }
+  std::vector<Eigen::Vector3d> positions_scaled = marker.positions;
+  for (auto& point : positions_scaled) {
+    point /= 10;
+  }
+  const int line_width = 2.0;
+  if (color == nullptr) {
+    glColor3f(1, 0, 0);
+  } else {
+    glColor3f(color[0], color[1], color[2]);
+  }
+
+  glLineWidth(line_width);
+  glBegin(GL_LINES);
+
+  for (int i = 0; i < positions_scaled.size() - 1; i++) {
+    glVertex3f(positions_scaled[i](0), positions_scaled[i](1),
+               positions_scaled[i](2));
+    glVertex3f(positions_scaled[i + 1](0), positions_scaled[i + 1](1),
+               positions_scaled[i + 1](2));
+  }
+  glVertex3f(positions_scaled[0](0), positions_scaled[0](1),
+             positions_scaled[0](2));
+  glVertex3f(positions_scaled[3](0), positions_scaled[3](1),
+             positions_scaled[3](2));
+  glEnd();
 }

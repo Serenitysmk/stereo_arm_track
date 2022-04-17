@@ -30,12 +30,15 @@ class Viewer {
 
   cv::Mat DrawFrameImage();
 
-  void PlotFrame(const Eigen::Vector4d& qvec, const Eigen::Vector3d& tvec, const float* color);
+  void PlotFrame(const Eigen::Vector4d& qvec, const Eigen::Vector3d& tvec,
+                 const float* color);
+
+  void PlotMarker(const Marker& marker, const float* color);
 
   const std::vector<std::string> camera_list_;
 
-  const std::unordered_map<std::string, Eigen::Vector4d> qvecs_; 
-  
+  const std::unordered_map<std::string, Eigen::Vector4d> qvecs_;
+
   const std::unordered_map<std::string, Eigen::Vector3d> tvecs_;
 
   const double display_scale_;

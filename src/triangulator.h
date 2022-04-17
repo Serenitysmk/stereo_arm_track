@@ -17,6 +17,12 @@ class Triangulator {
       Marker& marker);
 
  private:
+  bool EstimateTriangulation(
+      const std::vector<Eigen::Vector2d>& points,
+      const std::vector<Eigen::Vector4d>& qvecs,
+      const std::vector<Eigen::Vector3d>& tvecs,
+      Eigen::Vector3d* xyz);
+
   const std::vector<std::string> camera_list_;
 };
 
