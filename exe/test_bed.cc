@@ -29,6 +29,9 @@ DEFINE_string(video_path, "../data/for_marker_detection",
 DEFINE_bool(input_from_videos, false, "Grab frames from videos?");
 DEFINE_bool(marker_detection, false, "Test marker detection?");
 DEFINE_double(display_scale, 0.5, "Scale for image displaying");
+DEFINE_int32(max_track_length, 10000,
+             "Maximum track length to be displayed in the viewer");
+DEFINE_string(output_dir, "../result/", "Output directory for marker track.");
 
 void RunTestFrameGrabber();
 
@@ -111,6 +114,8 @@ void RunTestMarkerDetection() {
   options.display_scale = FLAGS_display_scale;
   options.input_from_videos = FLAGS_input_from_videos;
   options.video_path = FLAGS_video_path;
+  options.max_track_length = FLAGS_max_track_length;
+  options.output_dir = FLAGS_output_dir;
 
   Controller controller(&options);
 

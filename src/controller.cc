@@ -46,7 +46,12 @@ Controller::Controller(const ControllerOptions* options) : options_(options) {
   }
 
   // Initialize viewer.
-  viewer_ = new Viewer(camera_lists_, qvecs_, tvecs_, options_->display_scale);
+  viewer_ =
+      new Viewer(camera_lists_, qvecs_, tvecs_, options_->max_track_length, 0.1,
+                 options_->display_scale);
+
+  // Initialize marker track writer.
+  track_writer_ = new MarkerTrackWriter(options_->output_dir);
 }
 
 void Controller::Run() {
@@ -74,14 +79,6 @@ void Controller::Run() {
 
     detector_->Detect(frames, markers_corners, detection_success);
 
-    for (const std::string& sn : camera_lists_) {
-      if (detection_success.at(sn)) {
-        std::cout << sn << " detection success!" << std::endl;
-      } else {
-        std::cout << sn << " detection failed" << std::endl;
-      }
-    }
-
     Marker marker;
     marker.observations = markers_corners;
 
@@ -89,15 +86,21 @@ void Controller::Run() {
     bool tri_success =
         triangulator_->Triangulate(cameras_, qvecs_, tvecs_, marker);
 
-    std::cout << "Triangulate success! marker center: "
-              << marker.center.transpose() << std::endl;
-    viewer_->AddCurrentFrame(frames, marker);
+    viewer_->InsertCurrentFrame(frames, markers_corners);
+
+    if (tri_success) {
+      std::cout << "[Tracker running] current position: ["
+                << marker.center.transpose() << "]" << std::endl;
+      track_writer_->InsertNewMarker(marker);
+      viewer_->InsertNewMarker(marker);
+    }
   }
 
   stop_running_ = true;
   running_control_thread.detach();
 
   viewer_->Close();
+  track_writer_->Close();
 }
 
 void Controller::Shutdown() {

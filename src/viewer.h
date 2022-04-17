@@ -17,11 +17,16 @@ class Viewer {
   Viewer(const std::vector<std::string>& camera_list,
          const std::unordered_map<std::string, Eigen::Vector4d>& qvecs,
          const std::unordered_map<std::string, Eigen::Vector3d>& tvecs,
+         const size_t max_track_length,
+         const double world_scale,
          const double display_scale);
 
-  void AddCurrentFrame(
+  void InsertCurrentFrame(
       const std::unordered_map<std::string, cv::Mat>& current_frames,
-      const Marker& current_marker);
+      const std::unordered_map<std::string, std::vector<cv::Point2f>>&
+          current_observations);
+
+  void InsertNewMarker(const Marker& marker);
 
   void Close();
 
@@ -30,10 +35,14 @@ class Viewer {
 
   cv::Mat DrawFrameImage();
 
-  void PlotFrame(const Eigen::Vector4d& qvec, const Eigen::Vector3d& tvec,
-                 const float* color);
+  void RenderFrame(const Eigen::Vector4d& qvec, const Eigen::Vector3d& tvec,
+                   const float* color);
 
-  void PlotMarker(const Marker& marker, const float* color);
+  void RenderMarker(const Marker& marker, const float* color);
+  
+  void RenderMarkers();
+
+  void RenderCoordinateAxis();
 
   const std::vector<std::string> camera_list_;
 
@@ -41,11 +50,18 @@ class Viewer {
 
   const std::unordered_map<std::string, Eigen::Vector3d> tvecs_;
 
+  const size_t max_track_length_;
+
+  const double world_scale_;
+
   const double display_scale_;
 
   std::unordered_map<std::string, cv::Mat> current_frames_;
 
-  Marker current_marker_;
+  std::unordered_map<std::string, std::vector<cv::Point2f>>
+      current_observations_;
+
+  std::vector<Marker> track_;
 
   bool new_frame_arrived_ = false;
 

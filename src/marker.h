@@ -1,8 +1,10 @@
 #ifndef SRC_MARKER_H_
 #define SRC_MARKER_H_
 
+#include <mutex>
+#include <queue>
+#include <thread>
 #include <unordered_map>
-#include <vector>
 
 #include <Eigen/Core>
 #include <Eigen/Dense>
@@ -23,16 +25,30 @@ struct Marker {
   Eigen::Vector3d center;
 };
 
-class MarkerTrack {
+class MarkerTrackWriter {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  MarkerTrack();
+  MarkerTrackWriter(const std::string& output_dir);
 
-  const std::vector<Marker>& Track() const;
-  std::vector<Marker>& Track();
+  void InsertNewMarker(const Marker& marker);
+
+  void Close();
 
  private:
-  std::vector<Marker> track_;
+  void TrackWriter();
+
+  void WriteTrack(const Marker& marker, std::string& str);
+
+  // Output directory.
+  std::string output_dir_;
+
+  // Marker track.
+  std::queue<Marker> track_;
+
+  std::thread writer_thread_;
+  bool writer_running_ = true;
+
+  std::mutex data_mutex_;
 };
 
 #endif

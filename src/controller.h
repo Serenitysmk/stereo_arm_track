@@ -30,6 +30,11 @@ struct ControllerOptions {
   // Video path if the input is video.
   std::string video_path = "";
 
+  size_t max_track_length = 10000;
+
+  // Output directory for the marker track.
+  std::string output_dir = "";
+
   bool Check() const;
 };
 
@@ -71,6 +76,9 @@ class Controller {
 
   // Marker triangulator.
   Triangulator* triangulator_;
+
+  // Marker Track.
+  MarkerTrackWriter* track_writer_;
 
   bool stop_running_ = false;
 };

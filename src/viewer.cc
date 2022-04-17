@@ -11,21 +11,32 @@ using namespace colmap;
 Viewer::Viewer(const std::vector<std::string>& camera_list,
                const std::unordered_map<std::string, Eigen::Vector4d>& qvecs,
                const std::unordered_map<std::string, Eigen::Vector3d>& tvecs,
+               const size_t max_track_length, const double world_scale,
                const double display_scale)
     : camera_list_(camera_list),
       qvecs_(qvecs),
       tvecs_(tvecs),
+      max_track_length_(max_track_length),
+      world_scale_(world_scale),
       display_scale_(display_scale) {
   viewer_thread_ = std::thread(&Viewer::ThreadLoop, this);
 }
 
-void Viewer::AddCurrentFrame(
+void Viewer::InsertCurrentFrame(
     const std::unordered_map<std::string, cv::Mat>& current_frames,
-    const Marker& current_marker) {
+    const std::unordered_map<std::string, std::vector<cv::Point2f>>&
+        current_observations) {
   std::unique_lock<std::mutex> lock(viewer_data_mutex_);
   current_frames_ = current_frames;
-  current_marker_ = current_marker;
   new_frame_arrived_ = true;
+}
+
+void Viewer::InsertNewMarker(const Marker& marker) {
+  std::unique_lock<std::mutex> lock(viewer_data_mutex_);
+  track_.push_back(marker);
+  if (track_.size() > max_track_length_) {
+    track_.erase(track_.begin());
+  }
 }
 
 void Viewer::Close() {
@@ -60,8 +71,10 @@ void Viewer::ThreadLoop() {
     vis_display.Activate(viewer_camera);
 
     for (const std::string& sn : camera_list_) {
-      PlotFrame(qvecs_.at(sn), tvecs_.at(sn), green);
+      RenderFrame(qvecs_.at(sn), tvecs_.at(sn), green);
     }
+
+    RenderCoordinateAxis();
 
     std::unique_lock<std::mutex> lock(viewer_data_mutex_);
     if (new_frame_arrived_) {
@@ -77,7 +90,7 @@ void Viewer::ThreadLoop() {
       }
     }
 
-    PlotMarker(current_marker_, red);
+    RenderMarkers();
 
     pangolin::FinishFrame();
     new_frame_arrived_ = false;
@@ -105,10 +118,10 @@ cv::Mat Viewer::DrawFrameImage() {
     } else {
       cv::cvtColor(frame, color, cv::COLOR_GRAY2BGR);
     }
-    if (current_marker_.observations.find(camera_list_[camera_idx]) !=
-        current_marker_.observations.end()) {
+    if (current_observations_.find(camera_list_[camera_idx]) !=
+        current_observations_.end()) {
       std::vector<std::vector<cv::Point2f>> marker_corners = {
-          current_marker_.observations.at(camera_list_[camera_idx])};
+          current_observations_.at(camera_list_[camera_idx])};
 
       cv::aruco::drawDetectedMarkers(color, marker_corners, cv::noArray());
     }
@@ -126,8 +139,8 @@ cv::Mat Viewer::DrawFrameImage() {
   return img_show;
 }
 
-void Viewer::PlotFrame(const Eigen::Vector4d& qvec, const Eigen::Vector3d& tvec,
-                       const float* color) {
+void Viewer::RenderFrame(const Eigen::Vector4d& qvec,
+                         const Eigen::Vector3d& tvec, const float* color) {
   Eigen::Vector4d qvec_c2w;
   Eigen::Vector3d tvec_c2w;
   InvertPose(qvec, tvec, &qvec_c2w, &tvec_c2w);
@@ -146,7 +159,7 @@ void Viewer::PlotFrame(const Eigen::Vector4d& qvec, const Eigen::Vector3d& tvec,
   Eigen::Matrix4d pose_matrix = Eigen::Matrix4d::Identity();
 
   pose_matrix.block<3, 3>(0, 0) = QuaternionToRotationMatrix(qvec_c2w);
-  pose_matrix.block<3, 1>(0, 3) = tvec_c2w / 10.0;
+  pose_matrix.block<3, 1>(0, 3) = tvec_c2w * world_scale_;
 
   Eigen::Matrix4f m = pose_matrix.template cast<float>();
   glMultMatrixf((GLfloat*)m.data());
@@ -184,20 +197,16 @@ void Viewer::PlotFrame(const Eigen::Vector4d& qvec, const Eigen::Vector3d& tvec,
   glPopMatrix();
 }
 
-void Viewer::PlotMarker(const Marker& marker, const float* color) {
+void Viewer::RenderMarker(const Marker& marker, const float* color) {
   if (marker.positions.size() != 4) {
     return;
   }
   std::vector<Eigen::Vector3d> positions_scaled = marker.positions;
   for (auto& point : positions_scaled) {
-    point /= 10;
+    point *= world_scale_;
   }
   const int line_width = 2.0;
-  if (color == nullptr) {
-    glColor3f(1, 0, 0);
-  } else {
-    glColor3f(color[0], color[1], color[2]);
-  }
+  glColor3f(color[0], color[1], color[2]);
 
   glLineWidth(line_width);
   glBegin(GL_LINES);
@@ -212,5 +221,71 @@ void Viewer::PlotMarker(const Marker& marker, const float* color) {
              positions_scaled[0](2));
   glVertex3f(positions_scaled[3](0), positions_scaled[3](1),
              positions_scaled[3](2));
+  glEnd();
+}
+
+void Viewer::RenderMarkers() {
+  if (track_.size() == 0) return;
+
+  // Render history markers in the track.
+  const float blue[3] = {0, 0, 1};
+  const float red[3] = {1, 0, 0};
+  const float green[3] = {0, 1, 0};
+
+  RenderMarker(track_[track_.size() - 1], green);
+
+  if (track_.size() > 1) {
+    for (size_t i = 0; i < track_.size() - 1; i++) {
+      const Marker& marker = track_[i];
+      RenderMarker(marker, blue);
+    }
+
+    // Render connection lines.
+    const int line_width = 2.0;
+    glColor3f(red[0], red[1], red[2]);
+    glLineWidth(line_width);
+    glBegin(GL_LINES);
+    for (size_t i = 0; i < track_.size() - 1; i++) {
+      Eigen::Vector3d center_i = track_[i].center;
+      Eigen::Vector3d center_i_1 = track_[i + 1].center;
+      center_i *= world_scale_;
+      center_i_1 *= world_scale_;
+      glVertex3f(center_i(0), center_i(1), center_i(2));
+      glVertex3f(center_i_1(0), center_i_1(1), center_i_1(2));
+    }
+    glEnd();
+  }
+}
+
+void Viewer::RenderCoordinateAxis() {
+  const float red[3] = {1.0, 0.0, 0.0};
+  const float green[3] = {0.0, 1.0, 0.0};
+  const float blue[3] = {0.0, 0.0, 1.0};
+
+  const int line_width = 2.0;
+  const float sz = 3.0;
+
+  // Render X-axis.
+  glColor3f(red[0], red[1], red[2]);
+  glLineWidth(line_width);
+  glBegin(GL_LINES);
+  glVertex3f(0, 0, 0);
+  glVertex3f(sz, 0, 0);
+  glEnd();
+
+  // Render Y-axis.
+  glColor3f(green[0], green[1], green[2]);
+  glLineWidth(line_width);
+  glBegin(GL_LINES);
+  glVertex3f(0, 0, 0);
+  glVertex3f(0, sz, 0);
+  glEnd();
+
+  // Render Z-axis.
+  glColor3f(blue[0], blue[1], blue[2]);
+  glLineWidth(line_width);
+  glBegin(GL_LINES);
+  glVertex3f(0, 0, 0);
+  glVertex3f(0, 0, sz);
   glEnd();
 }
