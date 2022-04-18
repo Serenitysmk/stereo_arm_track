@@ -38,7 +38,7 @@ Controller::Controller(const ControllerOptions* options) : options_(options) {
     Camera camera;
     Eigen::Vector4d qvec;
     Eigen::Vector3d tvec;
-    const std::string path = JoinPaths("../config", sn + "_calibration.txt");
+    const std::string path = JoinPaths(options_->config_path, sn + "_calibration.txt");
     LoadCameraInfo(path, camera, qvec, tvec);
     cameras_.emplace(sn, camera);
     qvecs_.emplace(sn, qvec);
@@ -47,8 +47,8 @@ Controller::Controller(const ControllerOptions* options) : options_(options) {
 
   // Initialize viewer.
   viewer_ =
-      new Viewer(camera_lists_, qvecs_, tvecs_, options_->max_track_length, 0.1,
-                 options_->display_scale);
+      new Viewer(camera_lists_, qvecs_, tvecs_, options_->max_track_length,
+                 options_->world_display_scale, options_->image_display_scale);
 
   // Initialize marker track writer.
   track_writer_ = new MarkerTrackWriter(options_->output_dir);
@@ -56,7 +56,7 @@ Controller::Controller(const ControllerOptions* options) : options_(options) {
 
 void Controller::Run() {
   std::thread running_control_thread(&Controller::StopRunningControlLoop, this);
-  PrintHeading1("Start running ...");
+  PrintHeading1("Start running ... press 'ESC + Enter' to exit");
 
   while (!stop_running_) {
     // Grab new frames.

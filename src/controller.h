@@ -21,16 +21,23 @@ struct ControllerOptions {
   std::string camera_list =
       "7L03E0EPAK00002, 7L03E0EPAK00005, 7L03E0EPAK00022, 7L03E0EPAK00026";
 
+  // Path to the config files.
+  std::string config_path = "./config";
+  
   // Scale when displaying the images.
-  double display_scale = 0.25;
+  double image_display_scale = 0.25;
+
+  // Scale when display the world objects like cameras and trajectory.
+  double world_display_scale = 0.1;
+
+  // Maximum length to display the marker track.
+  size_t max_track_length = 10000;
 
   // Whether the input is video.
   bool input_from_videos = true;
 
   // Video path if the input is video.
   std::string video_path = "";
-
-  size_t max_track_length = 10000;
 
   // Output directory for the marker track.
   std::string output_dir = "";

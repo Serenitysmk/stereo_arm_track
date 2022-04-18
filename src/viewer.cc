@@ -11,14 +11,14 @@ using namespace colmap;
 Viewer::Viewer(const std::vector<std::string>& camera_list,
                const std::unordered_map<std::string, Eigen::Vector4d>& qvecs,
                const std::unordered_map<std::string, Eigen::Vector3d>& tvecs,
-               const size_t max_track_length, const double world_scale,
-               const double display_scale)
+               const size_t max_track_length, const double world_display_scale,
+               const double image_display_scale)
     : camera_list_(camera_list),
       qvecs_(qvecs),
       tvecs_(tvecs),
       max_track_length_(max_track_length),
-      world_scale_(world_scale),
-      display_scale_(display_scale) {
+      world_display_scale_(world_display_scale),
+      image_display_scale_(image_display_scale) {
   viewer_thread_ = std::thread(&Viewer::ThreadLoop, this);
 }
 
@@ -79,9 +79,10 @@ void Viewer::ThreadLoop() {
     std::unique_lock<std::mutex> lock(viewer_data_mutex_);
     if (new_frame_arrived_) {
       cv::Mat img = DrawFrameImage();
-      if (display_scale_ != 1.0) {
+      if (image_display_scale_ != 1.0) {
         cv::Mat img_resize;
-        cv::resize(img, img_resize, cv::Size(), display_scale_, display_scale_);
+        cv::resize(img, img_resize, cv::Size(), image_display_scale_,
+                   image_display_scale_);
         cv::imshow("Frames", img_resize);
         cv::waitKey(1);
       } else {
@@ -159,7 +160,7 @@ void Viewer::RenderFrame(const Eigen::Vector4d& qvec,
   Eigen::Matrix4d pose_matrix = Eigen::Matrix4d::Identity();
 
   pose_matrix.block<3, 3>(0, 0) = QuaternionToRotationMatrix(qvec_c2w);
-  pose_matrix.block<3, 1>(0, 3) = tvec_c2w * world_scale_;
+  pose_matrix.block<3, 1>(0, 3) = tvec_c2w * world_display_scale_;
 
   Eigen::Matrix4f m = pose_matrix.template cast<float>();
   glMultMatrixf((GLfloat*)m.data());
@@ -203,7 +204,7 @@ void Viewer::RenderMarker(const Marker& marker, const float* color) {
   }
   std::vector<Eigen::Vector3d> positions_scaled = marker.positions;
   for (auto& point : positions_scaled) {
-    point *= world_scale_;
+    point *= world_display_scale_;
   }
   const int line_width = 2.0;
   glColor3f(color[0], color[1], color[2]);
@@ -248,8 +249,8 @@ void Viewer::RenderMarkers() {
     for (size_t i = 0; i < track_.size() - 1; i++) {
       Eigen::Vector3d center_i = track_[i].center;
       Eigen::Vector3d center_i_1 = track_[i + 1].center;
-      center_i *= world_scale_;
-      center_i_1 *= world_scale_;
+      center_i *= world_display_scale_;
+      center_i_1 *= world_display_scale_;
       glVertex3f(center_i(0), center_i(1), center_i(2));
       glVertex3f(center_i_1(0), center_i_1(1), center_i_1(2));
     }

@@ -18,8 +18,8 @@ class Viewer {
          const std::unordered_map<std::string, Eigen::Vector4d>& qvecs,
          const std::unordered_map<std::string, Eigen::Vector3d>& tvecs,
          const size_t max_track_length,
-         const double world_scale,
-         const double display_scale);
+         const double world_display_scale,
+         const double image_display_scale);
 
   void InsertCurrentFrame(
       const std::unordered_map<std::string, cv::Mat>& current_frames,
@@ -52,9 +52,9 @@ class Viewer {
 
   const size_t max_track_length_;
 
-  const double world_scale_;
+  const double world_display_scale_;
 
-  const double display_scale_;
+  const double image_display_scale_;
 
   std::unordered_map<std::string, cv::Mat> current_frames_;
 

@@ -111,7 +111,7 @@ void RunTestMarkerDetection() {
   ControllerOptions options;
   options.num_cameras = FLAGS_num_cameras;
   options.camera_list = FLAGS_camera_list;
-  options.display_scale = FLAGS_display_scale;
+  options.image_display_scale = FLAGS_display_scale;
   options.input_from_videos = FLAGS_input_from_videos;
   options.video_path = FLAGS_video_path;
   options.max_track_length = FLAGS_max_track_length;
