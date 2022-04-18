@@ -28,6 +28,7 @@ void Viewer::InsertCurrentFrame(
         current_observations) {
   std::unique_lock<std::mutex> lock(viewer_data_mutex_);
   current_frames_ = current_frames;
+  current_observations_ = current_observations;
   new_frame_arrived_ = true;
 }
 
@@ -123,7 +124,7 @@ cv::Mat Viewer::DrawFrameImage() {
         current_observations_.end()) {
       std::vector<std::vector<cv::Point2f>> marker_corners = {
           current_observations_.at(camera_list_[camera_idx])};
-
+    
       cv::aruco::drawDetectedMarkers(color, marker_corners, cv::noArray());
     }
     if (num_cameras < 4) {

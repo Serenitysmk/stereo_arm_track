@@ -38,7 +38,8 @@ Controller::Controller(const ControllerOptions* options) : options_(options) {
     Camera camera;
     Eigen::Vector4d qvec;
     Eigen::Vector3d tvec;
-    const std::string path = JoinPaths(options_->config_path, sn + "_calibration.txt");
+    const std::string path =
+        JoinPaths(options_->config_path, sn + "_calibration.txt");
     LoadCameraInfo(path, camera, qvec, tvec);
     cameras_.emplace(sn, camera);
     qvecs_.emplace(sn, qvec);
@@ -89,8 +90,9 @@ void Controller::Run() {
     viewer_->InsertCurrentFrame(frames, markers_corners);
 
     if (tri_success) {
-      std::cout << "Tracking running. Current marker position: ["
+      std::cout << "[Tracking running] Current marker position: ["
                 << marker.center.transpose() << "]" << std::endl;
+      std::cout << std::endl;
       track_writer_->InsertNewMarker(marker);
       viewer_->InsertNewMarker(marker);
     }

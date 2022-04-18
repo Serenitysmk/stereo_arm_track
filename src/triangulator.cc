@@ -51,7 +51,7 @@ bool Triangulator::Triangulate(
   if (positions.size() < 3) {
     return false;
   } else {
-    Eigen::Vector3d center;
+    Eigen::Vector3d center(0.0, 0.0, 0.0);
     for (const auto& pos : positions) {
       center += pos;
     }
