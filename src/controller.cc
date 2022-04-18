@@ -89,7 +89,7 @@ void Controller::Run() {
     viewer_->InsertCurrentFrame(frames, markers_corners);
 
     if (tri_success) {
-      std::cout << "[Tracker running] current position: ["
+      std::cout << "Tracking running. Current marker position: ["
                 << marker.center.transpose() << "]" << std::endl;
       track_writer_->InsertNewMarker(marker);
       viewer_->InsertNewMarker(marker);

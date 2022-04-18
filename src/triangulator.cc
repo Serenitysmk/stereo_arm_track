@@ -16,9 +16,7 @@ bool Triangulator::Triangulate(
     const std::unordered_map<std::string, Eigen::Vector3d>& tvecs,
     Marker& marker) {
   if (marker.observations.size() < 2) {
-    std::cerr << "WARNING: The marker is observed by less than 2 cameras, "
-                 "can't perform triangulation"
-              << std::endl;
+    std::cerr << "WARNING: Marker is not observed!" << std::endl;
     return false;
   }
   size_t num_points = 0;
