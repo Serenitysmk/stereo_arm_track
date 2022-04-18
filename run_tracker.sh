@@ -4,7 +4,7 @@
 ####################
 
 # 如需帮助，可改为true
-HELP=true
+HELP=false
 
 # 共有相机的数量
 NUM_CAMERAS=4
@@ -25,7 +25,7 @@ WORLD_DISPLAY_SCALE=0.1
 MAX_TRACK_LENGTH=10000
 
 # 是否使用录用的视频数据
-INPUT_FROM_VIDEOS=true
+INPUT_FROM_VIDEOS=false
 
 # 如果使用录用好的视频，视频路径（默认./data/videos）
 VIDEO_PATH="./data/videos"
