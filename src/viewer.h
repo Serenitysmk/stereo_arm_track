@@ -33,6 +33,8 @@ class Viewer {
  private:
   void ThreadLoop();
 
+  void ThreadLoop2();
+
   cv::Mat DrawFrameImage();
 
   void RenderFrame(const Eigen::Vector4d& qvec, const Eigen::Vector3d& tvec,

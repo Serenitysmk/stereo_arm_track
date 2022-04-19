@@ -15,6 +15,9 @@ find_package(COLMAP REQUIRED)
 # Pangolin
 find_package(Pangolin REQUIRED)
 
+# Open3D
+find_package(Open3D REQUIRED)
+
 # Huaray SDK
 set(HUARAY_SDK_PATH /opt/HuarayTech/MVviewer/)
 set(HUARAY_INCLUDE_DIRS ${HUARAY_SDK_PATH}/include)
@@ -41,6 +44,7 @@ set(COMMON_LINK_LIBRARIES
     ${OpenCV_LIBRARIES}
     ${HUARAY_LIBRARIES}
     ${Pangolin_LIBRARIES}
+    Open3D::Open3D
 )
 
 # Global link directory (required by COLMAP and Huaray SDK).

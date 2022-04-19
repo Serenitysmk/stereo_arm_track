@@ -6,6 +6,8 @@
 #include <opencv2/aruco.hpp>
 #include <opencv2/opencv.hpp>
 
+#include <open3d/Open3D.h>
+
 using namespace colmap;
 
 Viewer::Viewer(const std::vector<std::string>& camera_list,
@@ -19,7 +21,7 @@ Viewer::Viewer(const std::vector<std::string>& camera_list,
       max_track_length_(max_track_length),
       world_display_scale_(world_display_scale),
       image_display_scale_(image_display_scale) {
-  viewer_thread_ = std::thread(&Viewer::ThreadLoop, this);
+  viewer_thread_ = std::thread(&Viewer::ThreadLoop2, this);
 }
 
 void Viewer::InsertCurrentFrame(
@@ -67,6 +69,7 @@ void Viewer::ThreadLoop() {
   const float blue[3] = {0, 0, 1};
 
   while (!pangolin::ShouldQuit() && viewer_running_) {
+    auto start = std::chrono::high_resolution_clock::now();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     vis_display.Activate(viewer_camera);
@@ -96,7 +99,48 @@ void Viewer::ThreadLoop() {
 
     pangolin::FinishFrame();
     new_frame_arrived_ = false;
+    auto end = std::chrono::high_resolution_clock::now();
+    auto elapsed_time =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    std::cout << elapsed_time.count() << " ms" << std::endl;
   }
+}
+
+void Viewer::ThreadLoop2() {
+  open3d::visualization::Visualizer visualizer;
+  visualizer.CreateVisualizerWindow("Tracker", 1024, 768);
+
+  visualizer.GetRenderOption().background_color_ = Eigen::Vector3d::Zero();
+  auto coordinate_axis = open3d::geometry::TriangleMesh::CreateCoordinateFrame(0.1);
+  visualizer.AddGeometry(coordinate_axis);
+
+  while (viewer_running_) {
+    auto start = std::chrono::high_resolution_clock::now();
+    visualizer.UpdateGeometry();
+    visualizer.PollEvents();
+    visualizer.UpdateRender();
+
+    std::unique_lock<std::mutex> lock(viewer_data_mutex_);
+    if (new_frame_arrived_) {
+      cv::Mat img = DrawFrameImage();
+      if (image_display_scale_ != 1.0) {
+        cv::Mat img_resize;
+        cv::resize(img, img_resize, cv::Size(), image_display_scale_,
+                   image_display_scale_);
+        cv::imshow("Frames", img_resize);
+        cv::waitKey(1);
+      } else {
+        cv::imshow("Frames", img);
+        cv::waitKey(1);
+      }
+    }
+    new_frame_arrived_ = false;
+    auto end = std::chrono::high_resolution_clock::now();
+    auto elapsed_time =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    std::cout << elapsed_time.count() << " ms" << std::endl;
+  }
+  return;
 }
 
 cv::Mat Viewer::DrawFrameImage() {
@@ -124,7 +168,7 @@ cv::Mat Viewer::DrawFrameImage() {
         current_observations_.end()) {
       std::vector<std::vector<cv::Point2f>> marker_corners = {
           current_observations_.at(camera_list_[camera_idx])};
-    
+
       cv::aruco::drawDetectedMarkers(color, marker_corners, cv::noArray());
     }
     if (num_cameras < 4) {
