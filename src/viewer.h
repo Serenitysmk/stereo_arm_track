@@ -8,10 +8,6 @@
 
 #include <opencv2/core.hpp>
 
-#include <pangolin/pangolin.h>
-
-#include <open3d/Open3D.h>
-
 #include "src/marker.h"
 
 class Viewer {
@@ -32,30 +28,10 @@ class Viewer {
   void Close();
 
  private:
+  
   void ThreadLoop();
 
-  void ThreadLoop2();
-
   cv::Mat DrawFrameImage();
-
-  void RenderFrame(const Eigen::Vector4d& qvec, const Eigen::Vector3d& tvec,
-                   const float* color);
-
-  std::shared_ptr<open3d::geometry::LineSet> CreateCamera(
-      const Eigen::Vector4d& qvec, const Eigen::Vector3d& tvec,
-      const Eigen::Vector3d& color);
-
-  std::shared_ptr<open3d::geometry::TriangleMesh> CreateCoordinateAxis();
-
-  void RenderMarker(const Marker& marker, const float* color);
-  void RenderMarker2(open3d::visualization::Visualizer& visualizer,
-                      const Marker& marker, const Eigen::Vector3d& color);
-
-  void RenderMarkers();
-  void RenderMarkers2(open3d::visualization::Visualizer& visualizer);
-  
-
-  void RenderCoordinateAxis();
 
   const std::vector<std::string> camera_list_;
 

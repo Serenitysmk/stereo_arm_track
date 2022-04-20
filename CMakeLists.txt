@@ -12,9 +12,6 @@ find_package(OpenCV REQUIRED)
 # COLMAP
 find_package(COLMAP REQUIRED)
 
-# Pangolin
-find_package(Pangolin REQUIRED)
-
 # Open3D
 find_package(Open3D REQUIRED)
 
@@ -35,7 +32,6 @@ set(COMMON_INCLUDE_DIRS
     ${PROJECT_SOURCE_DIR}
     ${OpenCV_INCLUDE_DIRS}
     ${COLMAP_INCLUDE_DIRS}
-    ${Pangolin_INCLUDE_DIRS}
     ${HUARAY_INCLUDE_DIRS}
 )
 
@@ -43,7 +39,6 @@ set(COMMON_LINK_LIBRARIES
     ${COLMAP_LIBRARIES}
     ${OpenCV_LIBRARIES}
     ${HUARAY_LIBRARIES}
-    ${Pangolin_LIBRARIES}
     Open3D::Open3D
 )
 
