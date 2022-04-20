@@ -48,8 +48,12 @@ class Viewer {
   std::shared_ptr<open3d::geometry::TriangleMesh> CreateCoordinateAxis();
 
   void RenderMarker(const Marker& marker, const float* color);
+  void RenderMarker2(open3d::visualization::Visualizer& visualizer,
+                      const Marker& marker, const Eigen::Vector3d& color);
 
   void RenderMarkers();
+  void RenderMarkers2(open3d::visualization::Visualizer& visualizer);
+  
 
   void RenderCoordinateAxis();
 

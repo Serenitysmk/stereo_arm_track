@@ -116,15 +116,25 @@ void Viewer::ThreadLoop2() {
 
   auto coordinate_axis = CreateCoordinateAxis();
   visualizer.AddGeometry(coordinate_axis);
-  for (const std::string& sn : camera_list_) {
-    auto camera =
-        CreateCamera(qvecs_.at(sn), tvecs_.at(sn), Eigen::Vector3d(0, 1, 0));
-    visualizer.AddGeometry(camera);
-  }
+  // for (const std::string& sn : camera_list_) {
+  //   auto camera =
+  //       CreateCamera(qvecs_.at(sn), tvecs_.at(sn), Eigen::Vector3d(0, 1, 0));
+  //   visualizer.AddGeometry(camera);
+  // }
 
   while (viewer_running_) {
     auto start = std::chrono::high_resolution_clock::now();
-    visualizer.UpdateGeometry(coordinate_axis);
+
+    for (const std::string& sn : camera_list_) {
+      auto camera =
+          CreateCamera(qvecs_.at(sn), tvecs_.at(sn), Eigen::Vector3d(0, 1, 0));
+      //visualizer.UpdateGeometry(camera);
+
+      //visualizer.AddGeometry(camera);
+    }
+    // RenderMarkers2(visualizer);
+
+    //visualizer.UpdateGeometry();
     visualizer.PollEvents();
     visualizer.UpdateRender();
 
@@ -254,7 +264,6 @@ void Viewer::RenderFrame(const Eigen::Vector4d& qvec,
 std::shared_ptr<open3d::geometry::LineSet> Viewer::CreateCamera(
     const Eigen::Vector4d& qvec, const Eigen::Vector3d& tvec,
     const Eigen::Vector3d& color) {
-  
   const float fx = 400;
   const float fy = 400;
   const float cx = 512;
@@ -337,6 +346,41 @@ void Viewer::RenderMarkers() {
     }
     glEnd();
   }
+}
+
+void Viewer::RenderMarker2(open3d::visualization::Visualizer& visualizer,
+                           const Marker& marker, const Eigen::Vector3d& color) {
+  if (marker.positions.size() != 4) {
+    return;
+  }
+
+  std::vector<Eigen::Vector3d> positions_scaled = marker.positions;
+  for (auto& point : positions_scaled) {
+    point *= world_display_scale_;
+  }
+
+  std::vector<Eigen::Vector2i> lines{
+      Eigen::Vector2i(0, 1),
+      Eigen::Vector2i(1, 2),
+      Eigen::Vector2i(2, 3),
+      Eigen::Vector2i(0, 3),
+  };
+
+  auto marker_actor = std::make_shared<open3d::geometry::LineSet>();
+  marker_actor->points_ = positions_scaled;
+  marker_actor->lines_ = lines;
+  marker_actor->PaintUniformColor(color);
+  // visualizer.AddGeometry(marker_actor);
+}
+
+void Viewer::RenderMarkers2(open3d::visualization::Visualizer& visualizer) {
+  if (track_.size() == 0) return;
+  // Render history markers in the track.
+  const Eigen::Vector3d blue(0, 0, 1);
+  const Eigen::Vector3d red(1, 0, 0);
+  const Eigen::Vector3d green(0, 1, 0);
+
+  RenderMarker2(visualizer, track_[track_.size() - 1], green);
 }
 
 void Viewer::RenderCoordinateAxis() {
