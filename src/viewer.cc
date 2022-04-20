@@ -111,12 +111,13 @@ void Viewer::ThreadLoop2() {
   visualizer.CreateVisualizerWindow("Tracker", 1024, 768);
 
   visualizer.GetRenderOption().background_color_ = Eigen::Vector3d::Zero();
-  auto coordinate_axis = open3d::geometry::TriangleMesh::CreateCoordinateFrame(0.1);
+  auto coordinate_axis =
+      open3d::geometry::TriangleMesh::CreateCoordinateFrame(0.001);
   visualizer.AddGeometry(coordinate_axis);
 
   while (viewer_running_) {
     auto start = std::chrono::high_resolution_clock::now();
-    visualizer.UpdateGeometry();
+    visualizer.UpdateGeometry(coordinate_axis);
     visualizer.PollEvents();
     visualizer.UpdateRender();
 
@@ -241,6 +242,43 @@ void Viewer::RenderFrame(const Eigen::Vector4d& qvec,
 
   glEnd();
   glPopMatrix();
+}
+
+void Viewer::RenderFrame2(const Eigen::Vector4d& qvec,
+                          const Eigen::Vector3d& tvec, const float* color) {
+  const float sz = 1.0;
+  const float fx = 400;
+  const float fy = 400;
+  const float cx = 512;
+  const float cy = 384;
+  const float width = 1080;
+  const float height = 768;
+
+  // std::vector<Eigen::Vector3d> point_set{
+  //     Eigen::Vector3d(0.0, 0.0, 0.0),
+  //     Eigen::Vector3d(sz * (0 - cx) / fx, sz * (0 - cy) / fy, sz),
+  //     Eigen::Vector3d(sz * (0 - cx) / fx, sz * (height - 1 - cy) / fy, sz),
+  //     Eigen::Vector3d(sz * (width - 1 - cx) / fx, sz * (height - 1 - cy) / fy,
+  //                     sz),
+  //     Eigen::Vector3d(sz * (width - 1 - cx) / fx, sz * (0 - cy) / fy, sz)};
+
+  // std::vector<Eigen::Vector2i> line_set{
+  //   Eigen::Vector2i(0, 1),
+  //   Eigen::Vector2i(0, 2),
+  //   Eigen::Vector2i(0, 3),
+  //   Eigen::Vector2i(0, 4),
+  //   Eigen::Vector2i(1, 2),
+  //   Eigen::Vector2i(2, 4),
+  //   Eigen::Vector2i(1, 3),
+  //   Eigen::Vector2i(3, 4),
+  // };
+
+  Eigen::Matrix3d intrinsic;
+  intrinsic << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0;
+  auto camera_vis = open3d::geometry::LineSet::CreateCameraVisualization(width, height, intrinsic, Eigen::Matrix4d::Identity());
+
+  
+  
 }
 
 void Viewer::RenderMarker(const Marker& marker, const float* color) {

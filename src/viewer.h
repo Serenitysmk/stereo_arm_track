@@ -17,8 +17,7 @@ class Viewer {
   Viewer(const std::vector<std::string>& camera_list,
          const std::unordered_map<std::string, Eigen::Vector4d>& qvecs,
          const std::unordered_map<std::string, Eigen::Vector3d>& tvecs,
-         const size_t max_track_length,
-         const double world_display_scale,
+         const size_t max_track_length, const double world_display_scale,
          const double image_display_scale);
 
   void InsertCurrentFrame(
@@ -40,8 +39,11 @@ class Viewer {
   void RenderFrame(const Eigen::Vector4d& qvec, const Eigen::Vector3d& tvec,
                    const float* color);
 
+  void RenderFrame2(const Eigen::Vector4d& qvec, const Eigen::Vector3d& tvec,
+                    const float* color);
+
   void RenderMarker(const Marker& marker, const float* color);
-  
+
   void RenderMarkers();
 
   void RenderCoordinateAxis();
