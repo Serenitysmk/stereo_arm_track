@@ -1,7 +1,7 @@
-#include "src/viewer.h"
-
 #include <base/pose.h>
 #include <base/projection.h>
+
+#include "src/viewer.h"
 
 #include <opencv2/aruco.hpp>
 #include <opencv2/opencv.hpp>
@@ -111,9 +111,16 @@ void Viewer::ThreadLoop2() {
   visualizer.CreateVisualizerWindow("Tracker", 1024, 768);
 
   visualizer.GetRenderOption().background_color_ = Eigen::Vector3d::Zero();
-  auto coordinate_axis =
-      open3d::geometry::TriangleMesh::CreateCoordinateFrame(0.001);
+
+  // Add coordinate axis.
+
+  auto coordinate_axis = CreateCoordinateAxis();
   visualizer.AddGeometry(coordinate_axis);
+  for (const std::string& sn : camera_list_) {
+    auto camera =
+        CreateCamera(qvecs_.at(sn), tvecs_.at(sn), Eigen::Vector3d(0, 1, 0));
+    visualizer.AddGeometry(camera);
+  }
 
   while (viewer_running_) {
     auto start = std::chrono::high_resolution_clock::now();
@@ -244,9 +251,10 @@ void Viewer::RenderFrame(const Eigen::Vector4d& qvec,
   glPopMatrix();
 }
 
-void Viewer::RenderFrame2(const Eigen::Vector4d& qvec,
-                          const Eigen::Vector3d& tvec, const float* color) {
-  const float sz = 1.0;
+std::shared_ptr<open3d::geometry::LineSet> Viewer::CreateCamera(
+    const Eigen::Vector4d& qvec, const Eigen::Vector3d& tvec,
+    const Eigen::Vector3d& color) {
+  
   const float fx = 400;
   const float fy = 400;
   const float cx = 512;
@@ -254,31 +262,21 @@ void Viewer::RenderFrame2(const Eigen::Vector4d& qvec,
   const float width = 1080;
   const float height = 768;
 
-  // std::vector<Eigen::Vector3d> point_set{
-  //     Eigen::Vector3d(0.0, 0.0, 0.0),
-  //     Eigen::Vector3d(sz * (0 - cx) / fx, sz * (0 - cy) / fy, sz),
-  //     Eigen::Vector3d(sz * (0 - cx) / fx, sz * (height - 1 - cy) / fy, sz),
-  //     Eigen::Vector3d(sz * (width - 1 - cx) / fx, sz * (height - 1 - cy) / fy,
-  //                     sz),
-  //     Eigen::Vector3d(sz * (width - 1 - cx) / fx, sz * (0 - cy) / fy, sz)};
-
-  // std::vector<Eigen::Vector2i> line_set{
-  //   Eigen::Vector2i(0, 1),
-  //   Eigen::Vector2i(0, 2),
-  //   Eigen::Vector2i(0, 3),
-  //   Eigen::Vector2i(0, 4),
-  //   Eigen::Vector2i(1, 2),
-  //   Eigen::Vector2i(2, 4),
-  //   Eigen::Vector2i(1, 3),
-  //   Eigen::Vector2i(3, 4),
-  // };
-
   Eigen::Matrix3d intrinsic;
-  intrinsic << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0;
-  auto camera_vis = open3d::geometry::LineSet::CreateCameraVisualization(width, height, intrinsic, Eigen::Matrix4d::Identity());
+  Eigen::Matrix4d extrinsic = Eigen::Matrix4d::Identity();
+  extrinsic.block<3, 3>(0, 0) = colmap::QuaternionToRotationMatrix(qvec);
+  extrinsic.block<3, 1>(0, 3) = tvec * world_display_scale_;
 
-  
-  
+  intrinsic << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0;
+  auto camera = open3d::geometry::LineSet::CreateCameraVisualization(
+      width, height, intrinsic, extrinsic, 4.0);
+  camera->PaintUniformColor(color);
+  return camera;
+}
+
+std::shared_ptr<open3d::geometry::TriangleMesh> Viewer::CreateCoordinateAxis() {
+  auto axis = open3d::geometry::TriangleMesh::CreateCoordinateFrame(4);
+  return axis;
 }
 
 void Viewer::RenderMarker(const Marker& marker, const float* color) {

@@ -10,6 +10,8 @@
 
 #include <pangolin/pangolin.h>
 
+#include <open3d/Open3D.h>
+
 #include "src/marker.h"
 
 class Viewer {
@@ -39,8 +41,11 @@ class Viewer {
   void RenderFrame(const Eigen::Vector4d& qvec, const Eigen::Vector3d& tvec,
                    const float* color);
 
-  void RenderFrame2(const Eigen::Vector4d& qvec, const Eigen::Vector3d& tvec,
-                    const float* color);
+  std::shared_ptr<open3d::geometry::LineSet> CreateCamera(
+      const Eigen::Vector4d& qvec, const Eigen::Vector3d& tvec,
+      const Eigen::Vector3d& color);
+
+  std::shared_ptr<open3d::geometry::TriangleMesh> CreateCoordinateAxis();
 
   void RenderMarker(const Marker& marker, const float* color);
 
