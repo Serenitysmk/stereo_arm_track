@@ -268,7 +268,7 @@ void Viewer::RenderCoordinateAxis() {
   const float green[3] = {0.0, 1.0, 0.0};
   const float blue[3] = {0.0, 0.0, 1.0};
 
-  const int line_width = 2.0;
+  const int line_width = 6.0;
   const float sz = 3.0;
 
   // Render X-axis.
