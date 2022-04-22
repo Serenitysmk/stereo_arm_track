@@ -157,7 +157,6 @@ void Viewer::ThreadLoop() {
   visualizer.GetViewControl().SetViewMatrices(view_matrix);
 
   while (viewer_running_) {
-    auto start = std::chrono::high_resolution_clock::now();
     RenderMarkers(visualizer, track_, world_display_scale_);
 
     visualizer.UpdateGeometry();
@@ -179,9 +178,6 @@ void Viewer::ThreadLoop() {
       }
     }
     new_frame_arrived_ = false;
-    auto end = std::chrono::high_resolution_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    std::cout << "cost: " << elapsed.count() << " ms" << std::endl;
   }
   return;
 }
