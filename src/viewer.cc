@@ -67,7 +67,6 @@ void Viewer::ThreadLoop() {
   const float blue[3] = {0, 0, 1};
 
   while (!pangolin::ShouldQuit() && viewer_running_) {
-    auto start = std::chrono::high_resolution_clock::now();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     vis_display.Activate(viewer_camera);
@@ -97,9 +96,6 @@ void Viewer::ThreadLoop() {
 
     pangolin::FinishFrame();
     new_frame_arrived_ = false;
-    auto end = std::chrono::high_resolution_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    std::cout << "cost: " << elapsed.count() << " ms" << std::endl;
   }
 }
 
