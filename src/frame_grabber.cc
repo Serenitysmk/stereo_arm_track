@@ -485,16 +485,16 @@ bool FrameGrabber::InitCameras() {
 
     std::cout << "Camera " << sn << " opened" << std::endl;
 
+    // Load camera config files.
+    ret = IMV_SetEnumFeatureSymbol(dev_handle, "UserSetSelector", "UserSet1");
+    ret = IMV_ExecuteCommandFeature(dev_handle, "UserSetLoad");
+    ret = IMV_SetEnumFeatureSymbol(dev_handle, "UserSetDefault", "UserSet1");
+
     // Set software trigger config.
     ret = SetSoftTriggerConf(dev_handle);
     if (ret != IMV_OK) {
       return false;
     }
-
-    // Load camera config files.
-    ret = IMV_SetEnumFeatureSymbol(dev_handle, "UserSetSelector", "UserSet1");
-    ret = IMV_ExecuteCommandFeature(dev_handle, "UserSetLoad");
-    ret = IMV_SetEnumFeatureSymbol(dev_handle, "UserSetDefault", "UserSet1");
 
     // Attach callback function.
     ret = IMV_AttachGrabbing(dev_handle, OnFrameGrabbed, (void*)dev_handle);

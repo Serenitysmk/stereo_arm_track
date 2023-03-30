@@ -28,7 +28,7 @@ Controller::Controller(const ControllerOptions* options) : options_(options) {
   CHECK(grabber_->Init()) << "ERROR: Failed to initialize the frame grabber!";
 
   // Initialize detectror.
-  detector_ = new MarkerDetector(camera_lists_, cv::aruco::DICT_4X4_1000);
+  detector_ = new MarkerDetector(camera_lists_, cv::aruco::DICT_6X6_1000);
 
   // Initialize triangulator.
   triangulator_ = new Triangulator(camera_lists_);
@@ -74,9 +74,6 @@ void Controller::Run() {
     }
 
     // Grab success.
-
-    std::cout << "Grab success" << std::endl;
-
     std::unordered_map<std::string, std::vector<cv::Point2f>> markers_corners;
     std::unordered_map<std::string, bool> detection_success;
 
@@ -98,7 +95,6 @@ void Controller::Run() {
       track_writer_->InsertNewMarker(marker);
       viewer_->InsertNewMarker(marker);
     }
-    std::cout << "one frame ends" << std::endl;
   }
 
   stop_running_ = true;

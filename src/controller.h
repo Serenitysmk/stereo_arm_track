@@ -23,7 +23,7 @@ struct ControllerOptions {
 
   // Path to the config files.
   std::string config_path = "./config";
-  
+
   // Scale when displaying the images.
   double image_display_scale = 0.25;
 
