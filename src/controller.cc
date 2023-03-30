@@ -75,6 +75,8 @@ void Controller::Run() {
 
     // Grab success.
 
+    std::cout << "Grab success" << std::endl;
+
     std::unordered_map<std::string, std::vector<cv::Point2f>> markers_corners;
     std::unordered_map<std::string, bool> detection_success;
 
@@ -96,6 +98,7 @@ void Controller::Run() {
       track_writer_->InsertNewMarker(marker);
       viewer_->InsertNewMarker(marker);
     }
+    std::cout << "one frame ends" << std::endl;
   }
 
   stop_running_ = true;
