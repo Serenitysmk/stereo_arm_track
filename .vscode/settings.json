@@ -9,7 +9,7 @@
         "args": [
             "--camera_list",
             "7L03E0EPAK00002, 7L03E0EPAK00026",
-            "num_cameras",
+            "--num_cameras",
             "2",
             "--record",
             "true",

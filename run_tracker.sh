@@ -7,10 +7,11 @@
 HELP=false
 
 # 共有相机的数量
-NUM_CAMERAS=4
+NUM_CAMERAS=2
 
 # 使用相机的列表（列表为当前使用相机的序列号集）
-CAMERA_LIST="7L03E0EPAK00002, 7L03E0EPAK00005, 7L03E0EPAK00022, 7L03E0EPAK00026"
+#CAMERA_LIST="7L03E0EPAK00002, 7L03E0EPAK00005, 7L03E0EPAK00022, 7L03E0EPAK00026"
+CAMERA_LIST="7L03E0EPAK00002, 7L03E0EPAK00026"
 
 # 配置文件的路径（默认为根目录的./config）
 CONFIG_PATH="./config"
@@ -38,7 +39,7 @@ OUTPUT_DIR="./result/"
 # 运行标示物跟踪
 ####################
 
-EXE_PATH="./build-release/exe/run_tracker"
+EXE_PATH="./build-Release/exe/run_tracker"
 
 if $HELP
 then
