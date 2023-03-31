@@ -70,7 +70,7 @@ void RunSaveFrames() {
     frame_cnt++;
     std::cout << "Saving frame: " << frame_cnt << std::endl;
 
-    key = cv::waitKey(30);
+    key = cv::waitKey(500);
     if ((int)key == 27) {
       break;
     }
