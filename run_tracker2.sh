@@ -25,7 +25,7 @@ WORLD_DISPLAY_SCALE=5
 MAX_TRACK_LENGTH=10000
 
 # 是否使用录用的视频数据
-INPUT_FROM_VIDEOS=false
+INPUT_FROM_VIDEOS=true
 
 # 如果使用录用好的视频，视频路径（默认./data/videos）
 VIDEO_PATH="./data_transport/for_marker_detection"
