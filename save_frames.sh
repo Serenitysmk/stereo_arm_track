@@ -7,14 +7,14 @@
 HELP=false
 
 # 共有相机的数量
-NUM_CAMERAS=1
+NUM_CAMERAS=2
 
 # 使用相机的列表（列表为当前使用相机的序列号集）
 #CAMERA_LIST="7L03E0EPAK00002, 7L03E0EPAK00005, 7L03E0EPAK00022, 7L03E0EPAK00026"
-CAMERA_LIST="7L03E0EPAK00002"
+CAMERA_LIST="7L03E0EPAK00002, 7L03E0EPAK00026"
 
 # 输出路径
-OUTPUT_DIR="./data/save_frames"
+OUTPUT_DIR="./data/test_marker_detection"
 
 ####################
 # 运行标示物跟踪

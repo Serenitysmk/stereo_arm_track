@@ -28,7 +28,7 @@ Controller::Controller(const ControllerOptions* options) : options_(options) {
   CHECK(grabber_->Init()) << "ERROR: Failed to initialize the frame grabber!";
 
   // Initialize detectror.
-  detector_ = new MarkerDetector(camera_lists_, cv::aruco::DICT_6X6_1000);
+  detector_ = new MarkerDetector(camera_lists_, cv::aruco::DICT_4X4_1000);
 
   // Initialize triangulator.
   triangulator_ = new Triangulator(camera_lists_);
