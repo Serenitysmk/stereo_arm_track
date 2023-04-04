@@ -1,5 +1,5 @@
-#include <iomanip>
 #include <iostream>
+#include <iomanip>
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
@@ -56,8 +56,7 @@ void RunSaveFrames() {
 
     for (const std::string& sn : camera_list) {
       std::stringstream stream;
-      stream << "frame_" << std::setfill('0') << std::setw(6) << frame_cnt
-             << ".png";
+      stream << "frame_" << std::setfill('0') << std::setw(6) << frame_cnt << ".png";
       const std::string output_path =
           JoinPaths(FLAGS_output_dir, sn, stream.str());
 

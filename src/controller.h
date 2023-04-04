@@ -68,7 +68,8 @@ class Controller {
   // Cameras.
   std::unordered_map<std::string, colmap::Camera> cameras_;
 
-  // Camera poses.
+  // Camera poses which describe transformations of a point in world frame to
+  // the target camera frame.
   std::unordered_map<std::string, Eigen::Vector4d> qvecs_;
   std::unordered_map<std::string, Eigen::Vector3d> tvecs_;
 
