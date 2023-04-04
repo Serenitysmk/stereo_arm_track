@@ -3,7 +3,7 @@
     <ExtraInfo>
         <SDKVersion>V2.3.2.194984</SDKVersion>
         <SourceOfGeneration>MVViewer</SourceOfGeneration>
-        <TimeOfGeneration>2022-04-16 04:56:34</TimeOfGeneration>
+        <TimeOfGeneration>2023-04-04 18:53:56</TimeOfGeneration>
     </ExtraInfo>
     <MVViewer>
         <deviceCtrlVisibility>Guru</deviceCtrlVisibility>
@@ -133,7 +133,7 @@
             <ExposureMode>0</ExposureMode>
             <ExposureTargetBrightness>50</ExposureTargetBrightness>
             <ExposureAuto>0</ExposureAuto>
-            <ExposureTime>5000</ExposureTime>
+            <ExposureTime>3000</ExposureTime>
             <selectingname>
                 <LineSelector>1</LineSelector>
                 <LineInverter>0</LineInverter>
@@ -161,7 +161,7 @@
                 <UserOutputValueAll>0</UserOutputValueAll>
             </selectingname>
             <GainSelector>0</GainSelector>
-            <GainRaw>4</GainRaw>
+            <GainRaw>6</GainRaw>
             <BlackLevelAuto>0</BlackLevelAuto>
             <BlackLevelSelector>0</BlackLevelSelector>
             <BlackLevel>60</BlackLevel>
@@ -172,21 +172,21 @@
             </selectingname>
             <selectingname>
                 <BalanceRatioSelector>2</BalanceRatioSelector>
-                <BalanceRatio>3.81</BalanceRatio>
+                <BalanceRatio>1.9055</BalanceRatio>
             </selectingname>
             <selectingname>
                 <BalanceRatioSelector>0</BalanceRatioSelector>
-                <BalanceRatio>1</BalanceRatio>
+                <BalanceRatio>1.80168</BalanceRatio>
             </selectingname>
-            <Gamma>0.45</Gamma>
+            <Gamma>1</Gamma>
             <LUTSelector>0</LUTSelector>
             <LUTEnable>0</LUTEnable>
             <LUTIndex>0</LUTIndex>
             <Fx3DelayTime>0</Fx3DelayTime>
             <U3VTxSwing>127</U3VTxSwing>
             <Deemphasis>17</Deemphasis>
-            <UserSetSelector>0</UserSetSelector>
-            <UserSetDefault>0</UserSetDefault>
+            <UserSetSelector>1</UserSetSelector>
+            <UserSetDefault>1</UserSetDefault>
             <ChunkModeActive>0</ChunkModeActive>
             <selectingname>
                 <ChunkSelector>1</ChunkSelector>
@@ -221,12 +221,10 @@
             <TimerTriggerActivation>0</TimerTriggerActivation>
             <TimerDelay>1024</TimerDelay>
             <TimerDuration>4096</TimerDuration>
-            <SharpnessEnabled>1</SharpnessEnabled>
-            <Sharpness>50</Sharpness>
-            <DenoisingEnabled>1</DenoisingEnabled>
-            <Denoising>50</Denoising>
+            <SharpnessEnabled>0</SharpnessEnabled>
+            <DenoisingEnabled>0</DenoisingEnabled>
             <DigitalShift>0</DigitalShift>
-            <Brightness>60</Brightness>
+            <Brightness>70</Brightness>
         </Property>
         <DrawROI/>
     </device>
