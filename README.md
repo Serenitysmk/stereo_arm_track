@@ -1,2 +1,2 @@
 # stereo_arm_track
-Robot arm tracking using stereo cameras
+Track and localize the end-effector of a robot arm with AruCo marker by a calibrated 4-camera setup.
